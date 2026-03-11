@@ -1,0 +1,30 @@
+export const projects = [
+  {
+    id: 'project-1',
+    name: 'TBD',
+    tagline: 'TBD',
+    techStack: ['TBD'],
+    accentColor: '#FF5E00',
+    githubUrl: 'TBD',
+    active: true,
+    position: [-4, 0, 0],
+  },
+  {
+    id: 'project-2',
+    name: 'TBD',
+    tagline: 'TBD',
+    techStack: ['TBD'],
+    accentColor: '#00FFFF',
+    githubUrl: 'TBD',
+    position: [0, 0, 0],
+  },
+  {
+    id: 'project-3',
+    name: 'TBD',
+    tagline: 'TBD',
+    techStack: ['TBD'],
+    accentColor: '#FF0000',
+    githubUrl: 'TBD',
+    position: [4, 0, 0],
+  },
+]

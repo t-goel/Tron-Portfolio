@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'TR2N';
+  src: url('./assets/fonts/Tron-JOAa.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --void-black: #000000;
+  --neon-cyan: #00FFFF;
+  --neon-orange: #FF5E00;
+  --crimson-red: #FF0000;
+  --off-white: #F0F0F0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--void-black);
+  color: var(--off-white);
+  font-family: 'Roboto Mono', monospace;
+}
+
+canvas {
+  display: block;
+}

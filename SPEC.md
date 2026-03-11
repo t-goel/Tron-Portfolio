@@ -103,7 +103,7 @@ Phase 5: Sector Dive (About / Skills / Projects)
 
 **FR2.2** Render 2D text overlays:
 - **"TANMAY GOEL"** — Red (`#FF0000`), TR2N font, positioned above the disc
-- **"SOFTWARE DEVELOPER"** — same font as "TANMAY GOEL", positioned below the disc
+- **"SOFTWARE DEVELOPER"** — Off-White (`#F0F0F0`), Roboto Mono font, positioned below the disc
 
 **FR2.3 — Hover State:** On cursor hover over the disc:
 - The outer red ring **spins rapidly** on the Z-axis
@@ -117,7 +117,7 @@ Phase 5: Sector Dive (About / Skills / Projects)
 
 Triggered by `onClick` on the central Identity Disc.
 
-**FR3.1 — Audio:** The track **"Just Turn It On and Make Something"** (open-source) is already playing (started in FR1.6) and continues looping for the rest of the session. A **mute/unmute toggle** (small speaker icon) is rendered in the HUD  in the bottom-right corner, allowing the user to control audio at any time.
+**FR3.1 — Audio:** The track **"Last Stop by Karl Casey"** (open-source) is already playing (started in FR1.6) and continues looping for the rest of the session. A **mute/unmute toggle** (small speaker icon) is rendered in the HUD  in the bottom-right corner, allowing the user to control audio at any time.
 
 **FR3.2 — Disc Docks:** The central disc:
 - Rapidly **scales down by ~80%**
