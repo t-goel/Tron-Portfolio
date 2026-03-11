@@ -1,7 +1,7 @@
 # Product Requirements Document: "Digital Dominion" — Tron-Themed 3D Portfolio
 
 **Author:** Tanmay Goel
-**Role:** Software Developer (CS at UIUC, intersection of CS, Economics, and AI)
+**Role:** Software Developer (CS at UIUC)
 **Platform:** Desktop & Mobile Web (Single Page Application)
 
 ---
@@ -56,7 +56,7 @@ Phase 1: Boot Sequence (Loading)
     ↓ [auto-completes]
 Phase 2: Main Hub (Disc at center)
     ↓ [onClick: disc]
-Phase 3: "Shatter & Dock" Transition (one-time)
+Phase 3: "black" Transition (one-time)
     ↓ [auto-completes]
 Phase 4: Grid World & 3D Gateways (main nav)
     ↓ [onClick: pane]
@@ -103,7 +103,7 @@ Phase 5: Sector Dive (About / Skills / Projects)
 
 **FR2.2** Render 2D text overlays:
 - **"TANMAY GOEL"** — Red (`#FF0000`), TR2N font, positioned above the disc
-- **"SOFTWARE DEVELOPER"** — White/Grey, Roboto Mono font, positioned below the disc
+- **"SOFTWARE DEVELOPER"** — same font as "TANMAY GOEL", positioned below the disc
 
 **FR2.3 — Hover State:** On cursor hover over the disc:
 - The outer red ring **spins rapidly** on the Z-axis
@@ -117,7 +117,7 @@ Phase 5: Sector Dive (About / Skills / Projects)
 
 Triggered by `onClick` on the central Identity Disc.
 
-**FR3.1 — Audio:** The track **"Just Turn It On and Make Something"** (open-source) is already playing (started in FR1.6) and continues looping for the rest of the session. A **mute/unmute toggle** (small speaker icon) is rendered in the HUD alongside the social links in the top-right corner, allowing the user to control audio at any time.
+**FR3.1 — Audio:** The track **"Just Turn It On and Make Something"** (open-source) is already playing (started in FR1.6) and continues looping for the rest of the session. A **mute/unmute toggle** (small speaker icon) is rendered in the HUD  in the bottom-right corner, allowing the user to control audio at any time.
 
 **FR3.2 — Disc Docks:** The central disc:
 - Rapidly **scales down by ~80%**
@@ -125,7 +125,7 @@ Triggered by `onClick` on the central Identity Disc.
 - Settles into a **slow, persistent idle rotation** — this is now the global Home button
 - The **"TANMAY GOEL"** text snaps into place beside the disc in the top-left HUD
 
-**FR3.3 — Social Links:** Fade in three glowing circular icon nodes in the **top-right corner**: GitHub, LinkedIn, Email
+**FR3.3 — Social Links:** Fade in three glowing circular icon nodes in the **bottom-right corner**: GitHub, LinkedIn, Email
 
 **FR3.4 — Grid Powers On:** The faint hover-state grid permanently locks in and illuminates:
 - Glowing **Neon Cyan** isometric wireframe on the XZ plane
