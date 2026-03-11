@@ -45,35 +45,41 @@ export default function TitleOverlay({ glitch }) {
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
         zIndex: 10,
       }}
     >
       <h1
         style={{
+          position: 'absolute',
+          top: '12%',
+          left: '50%',
+          transform: 'translateX(-50%)',
           fontFamily: "'TR2N', sans-serif",
           fontSize: 'clamp(2rem, 5vw, 4rem)',
           color: '#FF0000',
           letterSpacing: '0.3em',
-          marginBottom: '12rem',
+          margin: 0,
           textShadow: '0 0 20px rgba(255, 0, 0, 0.6), 0 0 40px rgba(255, 0, 0, 0.3)',
           userSelect: 'none',
+          whiteSpace: 'nowrap',
         }}
       >
         {displayName}
       </h1>
       <p
         style={{
+          position: 'absolute',
+          bottom: '18%',
+          left: '50%',
+          transform: 'translateX(-50%)',
           fontFamily: "'Roboto Mono', monospace",
           fontSize: 'clamp(0.7rem, 1.5vw, 1rem)',
           color: '#F0F0F0',
           letterSpacing: '0.5em',
-          marginTop: '0rem',
+          margin: 0,
           textShadow: '0 0 10px rgba(240, 240, 240, 0.3)',
           userSelect: 'none',
+          whiteSpace: 'nowrap',
         }}
       >
         SOFTWARE DEVELOPER
