@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 Phase: 1 of 4 (Boot + Disc Foundation)
 Plan: 0 of 3 in current phase
 Status: Ready to plan
-Last activity: 2026-03-18 - Completed quick task 260317-rg5: Remove disc from main screen, replace with glitch-text ENTER THE GRID button
+Last activity: 2026-03-18 - Completed quick task 260317-s7f: UI polish: neon glow, hierarchy, anchor CTA, thicker button border
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -83,6 +83,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260317-rg5 | Remove disc from main screen, replace with glitch-text ENTER THE GRID button | 2026-03-18 | b1672db | [260317-rg5-remove-disc-from-main-screen-replace-wit](./quick/260317-rg5-remove-disc-from-main-screen-replace-wit/) |
+| 260317-s7f | UI polish: neon glow, hierarchy, anchor CTA, thicker button border | 2026-03-18 | bb80f05 | [260317-s7f-ui-polish-neon-glow-hierarchy-anchor-cta](./quick/260317-s7f-ui-polish-neon-glow-hierarchy-anchor-cta/) |
 
 ### Blockers/Concerns
 

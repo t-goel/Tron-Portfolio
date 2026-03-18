@@ -47,8 +47,11 @@ function App() {
       >
         <Scene />
       </Canvas>
-      {!showBoot && phase >= 2 && <TitleOverlay visible={phase === 2} glitch={titleGlitch} />}
-      {!showBoot && phase === 2 && <EnterButton onHoverChange={setTitleGlitch} />}
+      {!showBoot && phase >= 2 && (
+        <TitleOverlay visible={phase === 2} glitch={titleGlitch}>
+          {phase === 2 && <EnterButton onHoverChange={setTitleGlitch} />}
+        </TitleOverlay>
+      )}
       {/* Black fade-in overlay: sits on top until mainVisible, then fades out */}
       {!showBoot && (
         <div
