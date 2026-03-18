@@ -67,7 +67,7 @@
 
 ### Non-Functional
 
-- [ ] **NFR-01**: WebGL unavailability detected on page load; shows styled error: "This experience requires WebGL" with direct links to GitHub, LinkedIn, and email
+- [x] **NFR-01**: WebGL unavailability detected on page load; shows styled error: "This experience requires WebGL" with direct links to GitHub, LinkedIn, and email
 - [ ] **NFR-02**: Mobile graceful degradation (<768px): boot sequence scales to fit, OrbitControls disabled, gateway panes stacked vertically in scrollable 2D overlay, simplified static grid loops in background
 - [ ] **NFR-03**: WebGL canvas maintains stable 60 FPS on modern desktop; instanced meshes used for grid lines and particles to minimize draw calls
 - [ ] **NFR-04**: Open Graph meta tags — OG title "Tanmay Goel — Software Developer", OG description, OG image matching Phase 2 visual on black background
@@ -109,7 +109,7 @@
 | BOOT-03 | Phase 1 — Boot + Disc Foundation | Complete |
 | BOOT-04 | Phase 1 — Boot + Disc Foundation | Complete |
 | AUDIO-01 | Phase 1 — Boot + Disc Foundation | Complete |
-| NFR-01 | Phase 1 — Boot + Disc Foundation | Pending |
+| NFR-01 | Phase 1 — Boot + Disc Foundation | Complete |
 | DOCK-01 | Phase 2 — Shatter & Dock | Pending |
 | DOCK-02 | Phase 2 — Shatter & Dock | Pending |
 | DOCK-03 | Phase 2 — Shatter & Dock | Pending |

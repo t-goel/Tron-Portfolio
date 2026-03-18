@@ -1,278 +1,330 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import useAppState from '../../store/appState'
 import { playWithFade, initAudio } from '../../utils/audioManager'
 
-const BOOT_KEY = 'tron-boot-played'
+const CENTER_RADIUS = 10
 
-// Easing functions
-function easeOutQuad(t) {
-  return 1 - (1 - t) * (1 - t)
+function expandPoly(verts, amount) {
+  const cx = verts.reduce((s, v) => s + v.x, 0) / verts.length
+  const cy = verts.reduce((s, v) => s + v.y, 0) / verts.length
+  return verts.map((v) => {
+    const dx = v.x - cx
+    const dy = v.y - cy
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist === 0) return v
+    return { x: v.x + (dx / dist) * amount, y: v.y + (dy / dist) * amount }
+  })
 }
 
-function easeInOutQuad(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+function generateShards() {
+  const shards = []
+  let id = 0
+
+  const cols = 7
+  const rows = 7
+  const cellW = 100 / cols
+  const cellH = 100 / rows
+
+  const points = []
+  for (let r = 0; r <= rows; r++) {
+    points[r] = []
+    for (let c = 0; c <= cols; c++) {
+      const isEdge = r === 0 || r === rows || c === 0 || c === cols
+      const jitterX = isEdge ? 0 : (Math.random() - 0.5) * cellW * 0.5
+      const jitterY = isEdge ? 0 : (Math.random() - 0.5) * cellH * 0.5
+      points[r][c] = {
+        x: c * cellW + jitterX,
+        y: r * cellH + jitterY,
+      }
+    }
+  }
+
+  const screenCenterX = 50
+  const screenCenterY = 50
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const tl = points[r][c]
+      const tr = points[r][c + 1]
+      const br = points[r + 1][c + 1]
+      const bl = points[r + 1][c]
+
+      const midX = (tl.x + tr.x + br.x + bl.x) / 4
+      const midY = (tl.y + tr.y + br.y + bl.y) / 4
+
+      const distFromCenter = Math.sqrt(
+        Math.pow(midX - screenCenterX, 2) + Math.pow(midY - screenCenterY, 2)
+      )
+
+      const isCenter = distFromCenter < CENTER_RADIUS
+
+      const expanded = expandPoly([tl, tr, br, bl], 0)
+      const clipPath = `polygon(${expanded.map((v) => `${v.x}% ${v.y}%`).join(', ')})`
+
+      const angle = Math.atan2(midY - screenCenterY, midX - screenCenterX)
+      const fallDistance = 120 + Math.random() * 80
+
+      const maxDist = 70
+      const normalizedDist = Math.min(distFromCenter / maxDist, 1)
+      const delay = (1 - normalizedDist) * 0.8 + Math.random() * 0.2
+
+      shards.push({
+        id: id++,
+        clipPath,
+        vertices: [tl, tr, br, bl],
+        midX,
+        midY,
+        rotation: (Math.random() - 0.5) * 30,
+        delay,
+        fallX: Math.cos(angle) * fallDistance,
+        fallY: Math.sin(angle) * fallDistance + 50,
+        isCenter,
+      })
+    }
+  }
+
+  return shards
 }
 
-// Phase timing constants (ms)
-const TRACE_START = 0
-const TRACE_END = 2000
-const FLASH_START = 2000
-const FLASH_END = 2400
-const FADE_BLACK_START = 2400
-const FADE_BLACK_END = 3200
-const AUDIO_TRIGGER = 2400
+function convexHull(pts) {
+  const unique = [
+    ...new Map(
+      pts.map((p) => [`${p.x.toFixed(4)},${p.y.toFixed(4)}`, p])
+    ).values(),
+  ]
+  if (unique.length < 3) return unique
+
+  unique.sort((a, b) => a.x - b.x || a.y - b.y)
+
+  const cross = (O, A, B) =>
+    (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x)
+
+  const lower = []
+  for (const p of unique) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
+      lower.pop()
+    lower.push(p)
+  }
+
+  const upper = []
+  for (let i = unique.length - 1; i >= 0; i--) {
+    const p = unique[i]
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0)
+      upper.pop()
+    upper.push(p)
+  }
+
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)]
+}
 
 export default function BootSequence({ onComplete }) {
   const setPhase = useAppState((s) => s.setPhase)
-  const canvasRef = useRef(null)
-  const rafRef = useRef(null)
-  const completedRef = useRef(false)
-  const audioTriggeredRef = useRef(false)
-  const startTimeRef = useRef(null)
-  const [fadingOut, setFadingOut] = useState(false)
+  const [phase, setAnimPhase] = useState('idle')
+  const [shards, setShards] = useState([])
+  const hasInitialized = useRef(false)
 
-  const triggerFadeOut = () => {
-    if (completedRef.current) return
-    completedRef.current = true
-    sessionStorage.setItem(BOOT_KEY, '1')
-    setPhase(2)       // disc starts rendering underneath
-    setFadingOut(true) // CSS overlay fades to transparent
-  }
+  const startAnimation = useCallback(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    setShards(generateShards())
 
-  const complete = () => {
-    if (onComplete) onComplete() // remove overlay after CSS transition
-  }
+    const sound = initAudio()
+    if (sound) {
+      sound.on('playerror', () => {
+        document.addEventListener('click', () => playWithFade(2000), { once: true })
+      })
+    }
+
+    setTimeout(() => setAnimPhase('cracking'), 400)
+    setTimeout(() => {
+      setAnimPhase('falling')
+      setPhase(2)
+      playWithFade(2000)
+    }, 1200)
+    setTimeout(() => setAnimPhase('pivot'), 2400)
+    setTimeout(() => setAnimPhase('drop'), 4800)
+    setTimeout(() => {
+      setAnimPhase('done')
+      if (onComplete) onComplete()
+    }, 5800)
+  }, [onComplete, setPhase])
 
   useEffect(() => {
-    // Session skip — if already booted, jump straight to disc
-    if (sessionStorage.getItem(BOOT_KEY)) {
-      setPhase(2)
-      if (onComplete) onComplete()
-      return
-    }
+    startAnimation()
+  }, [startAnimation])
 
-    const canvas = canvasRef.current
-    if (!canvas) return
+  const outerShards = useMemo(() => shards.filter((s) => !s.isCenter), [shards])
+  const centerShards = useMemo(() => shards.filter((s) => s.isCenter), [shards])
 
-    const ctx = canvas.getContext('2d')
+  const pivot = useMemo(() => {
+    if (centerShards.length === 0) return { x: 50, y: 50 }
+    const tr = centerShards[0].vertices[1]
+    return { x: tr.x, y: tr.y }
+  }, [centerShards])
 
-    // Size canvas to viewport
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
+  const centerClip = useMemo(() => {
+    if (centerShards.length === 0) return 'none'
+    const allVerts = centerShards.flatMap((s) => s.vertices)
+    const hull = convexHull(allVerts)
+    const expanded = expandPoly(hull, 1.5)
+    return `polygon(${expanded.map((v) => `${v.x}% ${v.y}%`).join(', ')})`
+  }, [centerShards])
 
-    const TEXT = 'LOADING'
-    const fontSize = Math.min(canvas.width * 0.12, 120)
-    const centerY = canvas.height / 2
-    const centerX = canvas.width / 2
+  if (phase === 'done') return null
 
-    // Pre-measure text dimensions
-    ctx.font = `${fontSize}px TR2N, sans-serif`
-    const textMetrics = ctx.measureText(TEXT)
-    const textWidth = textMetrics.width
-    const textLeft = centerX - textWidth / 2
-    const textRight = centerX + textWidth / 2
-
-    // Autoplay fallback state
-    let audioFailed = false
-
-    function setupAudioFallback() {
-      const sound = initAudio()
-      if (sound) {
-        sound.on('playerror', () => {
-          audioFailed = true
-          document.addEventListener(
-            'click',
-            () => {
-              audioFailed = false
-              playWithFade(2000)
-            },
-            { once: true }
-          )
-        })
-      }
-    }
-    setupAudioFallback()
-
-    function drawFrame(elapsed) {
-      const W = canvas.width
-      const H = canvas.height
-
-      // Trigger audio at the right moment
-      if (elapsed >= AUDIO_TRIGGER && !audioTriggeredRef.current) {
-        audioTriggeredRef.current = true
-        playWithFade(2000)
-      }
-
-      // Clear canvas
-      ctx.clearRect(0, 0, W, H)
-      ctx.fillStyle = '#000000'
-      ctx.fillRect(0, 0, W, H)
-
-      // ---- PHASE 1: Letter Tracing (0 - 2000ms) ----
-      if (elapsed >= TRACE_START && elapsed < FLASH_START) {
-        const t = Math.min((elapsed - TRACE_START) / (TRACE_END - TRACE_START), 1)
-        const sweepX = textLeft + textWidth * t
-
-        ctx.font = `${fontSize}px TR2N, sans-serif`
-
-        // Draw top half (cyan)
-        ctx.save()
-        ctx.beginPath()
-        ctx.rect(textLeft, 0, sweepX - textLeft, centerY)
-        ctx.clip()
-        ctx.shadowBlur = 15
-        ctx.shadowColor = '#00FFFF'
-        ctx.strokeStyle = '#00FFFF'
-        ctx.lineWidth = 2
-        ctx.strokeText(TEXT, textLeft, centerY + fontSize * 0.25)
-        ctx.restore()
-
-        // Draw bottom half (orange)
-        ctx.save()
-        ctx.beginPath()
-        ctx.rect(textLeft, centerY, sweepX - textLeft, H - centerY)
-        ctx.clip()
-        ctx.shadowBlur = 15
-        ctx.shadowColor = '#FF5E00'
-        ctx.strokeStyle = '#FF5E00'
-        ctx.lineWidth = 2
-        ctx.strokeText(TEXT, textLeft, centerY + fontSize * 0.25)
-        ctx.restore()
-
-        // Cyan sprite (top half) — leading glow dot
-        const cyanGrad = ctx.createRadialGradient(sweepX, centerY - 20, 0, sweepX, centerY - 20, 18)
-        cyanGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)')
-        cyanGrad.addColorStop(0.3, 'rgba(0, 255, 255, 0.7)')
-        cyanGrad.addColorStop(1, 'rgba(0, 255, 255, 0)')
-        ctx.fillStyle = cyanGrad
-        ctx.beginPath()
-        ctx.arc(sweepX, centerY - 20, 18, 0, Math.PI * 2)
-        ctx.fill()
-
-        // Orange sprite (bottom half) — leading glow dot
-        const orangeGrad = ctx.createRadialGradient(sweepX, centerY + 20, 0, sweepX, centerY + 20, 18)
-        orangeGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)')
-        orangeGrad.addColorStop(0.3, 'rgba(255, 94, 0, 0.7)')
-        orangeGrad.addColorStop(1, 'rgba(255, 94, 0, 0)')
-        ctx.fillStyle = orangeGrad
-        ctx.beginPath()
-        ctx.arc(sweepX, centerY + 20, 18, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // ---- PHASE 2: Collision Flash (2000ms - 2200ms) ----
-      if (elapsed >= FLASH_START && elapsed < FLASH_END) {
-        const t = (elapsed - FLASH_START) / (FLASH_END - FLASH_START)
-        const easedT = easeOutQuad(t)
-
-        // Draw the completed text briefly at peak flash
-        ctx.font = `${fontSize}px TR2N, sans-serif`
-
-        // Full text in cyan top half
-        ctx.save()
-        ctx.beginPath()
-        ctx.rect(0, 0, W, centerY)
-        ctx.clip()
-        ctx.shadowBlur = 20
-        ctx.shadowColor = '#00FFFF'
-        ctx.strokeStyle = '#00FFFF'
-        ctx.lineWidth = 2
-        ctx.strokeText(TEXT, textLeft, centerY + fontSize * 0.25)
-        ctx.restore()
-
-        // Full text in orange bottom half
-        ctx.save()
-        ctx.beginPath()
-        ctx.rect(0, centerY, W, H - centerY)
-        ctx.clip()
-        ctx.shadowBlur = 20
-        ctx.shadowColor = '#FF5E00'
-        ctx.strokeStyle = '#FF5E00'
-        ctx.lineWidth = 2
-        ctx.strokeText(TEXT, textLeft, centerY + fontSize * 0.25)
-        ctx.restore()
-
-        // Expanding white radial flash from center
-        const maxRadius = Math.sqrt((W / 2) ** 2 + (H / 2) ** 2) * 1.5
-        const currentRadius = maxRadius * easedT
-        const flashGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, currentRadius)
-        flashGrad.addColorStop(0, `rgba(255, 255, 255, ${0.9 * (1 - t * 0.3)})`)
-        flashGrad.addColorStop(0.3, `rgba(200, 240, 255, ${0.6 * (1 - t * 0.3)})`)
-        flashGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
-        ctx.fillStyle = flashGrad
-        ctx.beginPath()
-        ctx.arc(centerX, centerY, currentRadius, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // ---- PHASE 3: Fade to Black (2200ms - 2700ms) ----
-      if (elapsed >= FADE_BLACK_START && elapsed < FADE_BLACK_END) {
-        const t = (elapsed - FADE_BLACK_START) / (FADE_BLACK_END - FADE_BLACK_START)
-        // Already drew black background at top — just keep canvas black, optionally fade out flash residual
-        ctx.fillStyle = `rgba(0, 0, 0, ${t})`
-        ctx.fillRect(0, 0, W, H)
-      }
-
-      // Autoplay fallback text
-      if (audioFailed) {
-        ctx.save()
-        ctx.globalAlpha = 0.8
-        ctx.font = `14px 'Roboto Mono', monospace`
-        ctx.fillStyle = '#00FFFF'
-        ctx.textAlign = 'center'
-        ctx.fillText('CLICK TO ENABLE AUDIO', centerX, H - 40)
-        ctx.restore()
-      }
-
-      // At end of canvas animation, trigger CSS fade-out to reveal disc
-      if (elapsed >= FADE_BLACK_END) {
-        triggerFadeOut()
-      }
-    }
-
-    function animate(timestamp) {
-      if (!startTimeRef.current) startTimeRef.current = timestamp
-      const elapsed = timestamp - startTimeRef.current
-      drawFrame(elapsed)
-
-      if (elapsed < FADE_BLACK_END && !completedRef.current) {
-        rafRef.current = requestAnimationFrame(animate)
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(animate)
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
-      }
-    }
-  }, [])
+  const showCenterPiece = phase === 'falling' || phase === 'pivot' || phase === 'drop'
 
   return (
-    <div
-      onTransitionEnd={complete}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        background: '#000',
-        zIndex: 20,
-        overflow: 'hidden',
-        opacity: fadingOut ? 0 : 1,
-        transition: fadingOut ? 'opacity 1.4s ease-in' : 'none',
-      }}
-    >
-      <canvas
-        ref={canvasRef}
+    <div className="fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
+      {/* Crack lines SVG overlay */}
+      {(phase === 'cracking' || phase === 'falling') && (
+        <svg
+          className="absolute inset-0 w-full h-full z-10"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          style={{
+            opacity: phase === 'falling' ? 0 : 1,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <CrackLines />
+        </svg>
+      )}
+
+      {/* Outer shards - fall away from center */}
+      {outerShards.map((shard) => (
+        <div
+          key={shard.id}
+          className="absolute inset-0 z-20"
+          style={{
+            clipPath: shard.clipPath,
+            transform:
+              phase === 'falling' || phase === 'pivot' || phase === 'drop'
+                ? `translate(${shard.fallX}px, ${shard.fallY}px) rotate(${shard.rotation}deg)`
+                : 'translate(0, 0) rotate(0deg)',
+            opacity:
+              phase === 'falling' || phase === 'pivot' || phase === 'drop' ? 0 : 1,
+            transition: `transform ${0.8 + Math.random() * 0.4}s cubic-bezier(0.55, 0.06, 0.68, 0.19) ${shard.delay}s, opacity 0.6s ease ${shard.delay + 0.3}s`,
+            willChange: 'transform, opacity',
+          }}
+        >
+          <div className="w-full h-full bg-[#fafafa]" />
+        </div>
+      ))}
+
+      {/* Center piece - composed of actual grid cells so edges align perfectly.
+          Pivots like a loose picture frame, then drops. */}
+      <div
+        className="absolute inset-0 z-30"
         style={{
-          display: 'block',
-          width: '100%',
-          height: '100%',
+          transformOrigin: `${pivot.x}% ${pivot.y}%`,
+          animation: showCenterPiece
+            ? phase === 'drop'
+              ? 'pivotDrop 0.9s cubic-bezier(0.6, 0, 1, 0.4) forwards'
+              : phase === 'pivot'
+                ? 'pivotSwing 2.2s ease-in-out forwards'
+                : 'none'
+            : 'none',
+          willChange: 'transform, opacity',
         }}
-      />
+      >
+        {/* Individual center cells with grid-aligned clip paths */}
+        {centerShards.map((shard) => (
+          <div
+            key={shard.id}
+            className="absolute inset-0"
+            style={{ clipPath: shard.clipPath }}
+          >
+            <div className="w-full h-full bg-[#fafafa]" />
+          </div>
+        ))}
+
+        {/* Loading indicator, clipped to center area */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ clipPath: centerClip }}
+        >
+          <div className="flex flex-col items-center gap-1.5 sm:gap-3 scale-75 sm:scale-100">
+            <div className="flex gap-1 sm:gap-1.5">
+              <span
+                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
+                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0s' }}
+              />
+              <span
+                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
+                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0.2s' }}
+              />
+              <span
+                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
+                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0.4s' }}
+              />
+            </div>
+            <span className="text-xs sm:text-sm font-mono tracking-[0.15em] sm:tracking-[0.3em] uppercase text-[#0a0a0a]">
+              Loading
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Full white base layer */}
+      {(phase === 'idle' || phase === 'cracking') ? (
+        <div className="absolute inset-0 z-0 bg-[#fafafa]" />
+      ) : null}
     </div>
+  )
+}
+
+function CrackLines() {
+  const lines = []
+
+  const numCracks = 8
+  for (let i = 0; i < numCracks; i++) {
+    const angle = (i / numCracks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3
+    const length = 40 + Math.random() * 20
+    const segments = 3 + Math.floor(Math.random() * 3)
+    let path = `M 50 50`
+    let curX = 50
+    let curY = 50
+
+    for (let s = 1; s <= segments; s++) {
+      const segLen = length / segments
+      const jitter = (Math.random() - 0.5) * 8
+      curX += Math.cos(angle + jitter * 0.05) * segLen
+      curY += Math.sin(angle + jitter * 0.05) * segLen
+      path += ` L ${curX} ${curY}`
+    }
+
+    lines.push({ d: path, delay: i * 0.05 })
+
+    if (Math.random() > 0.3) {
+      const branchStart = 0.3 + Math.random() * 0.4
+      const bx = 50 + Math.cos(angle) * length * branchStart
+      const by = 50 + Math.sin(angle) * length * branchStart
+      const branchAngle = angle + (Math.random() - 0.5) * 1.2
+      const branchLen = 10 + Math.random() * 15
+      const bex = bx + Math.cos(branchAngle) * branchLen
+      const bey = by + Math.sin(branchAngle) * branchLen
+      lines.push({ d: `M ${bx} ${by} L ${bex} ${bey}`, delay: i * 0.05 + 0.15 })
+    }
+  }
+
+  return (
+    <>
+      {lines.map((line, i) => (
+        <path
+          key={i}
+          d={line.d}
+          fill="none"
+          stroke="#d4d4d4"
+          strokeWidth="0.3"
+          vectorEffect="non-scaling-stroke"
+          style={{
+            strokeDasharray: 1000,
+            strokeDashoffset: 1000,
+            animation: `crackDraw 0.4s ease-out ${line.delay}s forwards`,
+          }}
+        />
+      ))}
+    </>
   )
 }

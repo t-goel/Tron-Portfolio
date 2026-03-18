@@ -16,10 +16,21 @@ export default function IdentityDisc({ onClick, onHoverChange }) {
   // Load reference image as disc texture
   const refTexture = useLoader(THREE.TextureLoader, '/disc-reference.png')
 
-  // Texture is a pre-cropped 652x652 square — no UV adjustment needed
-  useMemo(() => {
-    refTexture.needsUpdate = true
-  }, [refTexture])
+  // Circular alpha mask — white circle on black, clips plane corners to a disc shape
+  const alphaMap = useMemo(() => {
+    const size = 512
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = 'black'
+    ctx.fillRect(0, 0, size, size)
+    ctx.fillStyle = 'white'
+    ctx.beginPath()
+    ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2)
+    ctx.fill()
+    return new THREE.CanvasTexture(canvas)
+  }, [])
 
   // Particle system
   const particleCount = 150
@@ -162,9 +173,10 @@ export default function IdentityDisc({ onClick, onHoverChange }) {
 
         {/* Disc face — front */}
         <mesh ref={detailMeshRef} position={[0, 0, 0.045]}>
-          <circleGeometry args={[DISC_RADIUS, 128]} />
+          <planeGeometry args={[DISC_RADIUS * 2, DISC_RADIUS * 2]} />
           <meshBasicMaterial
             map={refTexture}
+            alphaMap={alphaMap}
             toneMapped={false}
             transparent
             opacity={1}
@@ -173,9 +185,10 @@ export default function IdentityDisc({ onClick, onHoverChange }) {
 
         {/* Disc face — back */}
         <mesh position={[0, 0, -0.045]} rotation={[0, Math.PI, 0]}>
-          <circleGeometry args={[DISC_RADIUS, 128]} />
+          <planeGeometry args={[DISC_RADIUS * 2, DISC_RADIUS * 2]} />
           <meshBasicMaterial
             map={refTexture}
+            alphaMap={alphaMap}
             toneMapped={false}
             transparent
             opacity={1}

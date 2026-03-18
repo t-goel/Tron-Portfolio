@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-boot-disc-foundation plan 02 (BootSequence + audioManager)
-last_updated: "2026-03-17T23:29:48.454Z"
+stopped_at: Completed 01-04 EnterButton CTA for phase 2
+last_updated: "2026-03-18T00:37:54.617Z"
 last_activity: 2026-03-17 — Roadmap created; brownfield context mapped (Phase 2 disc + TitleOverlay existing)
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 Phase: 1 of 4 (Boot + Disc Foundation)
 Plan: 0 of 3 in current phase
 Status: Ready to plan
-Last activity: 2026-03-17 — Roadmap created; brownfield context mapped (Phase 2 disc + TitleOverlay existing)
+Last activity: 2026-03-18 - Completed quick task 260317-rg5: Remove disc from main screen, replace with glitch-text ENTER THE GRID button
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,8 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-boot-disc-foundation P01 | 2 | 1 tasks | 1 files |
 | Phase 01-boot-disc-foundation P02 | 18 | 3 tasks | 6 files |
+| Phase 01-boot-disc-foundation P03 | 2 | 2 tasks | 3 files |
+| Phase 01-boot-disc-foundation P04 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -68,10 +70,19 @@ Recent decisions affecting current work:
 - [Phase 01-boot-disc-foundation]: Elapsed-time-based rAF timeline (not frame counters) for device-independent animation speed
 - [Phase 01-boot-disc-foundation]: Howler singleton via module-level variable — lazy-initialized once, never recreated
 - [Phase 01-boot-disc-foundation]: Canvas clip regions for top/bottom letter half cyan/orange split in boot animation
+- [Phase 01-boot-disc-foundation]: useMemo for detectWebGL call — synchronous boolean, memoized once on mount, no state re-render
+- [Phase 01-boot-disc-foundation]: Early return before Canvas mount — ensures no Three.js/R3F initialization without WebGL
+- [Phase 01-boot-disc-foundation]: EnterButton is sole phase 2->3 CTA — disc click handler removed to avoid double affordance confusion
 
 ### Pending Todos
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260317-rg5 | Remove disc from main screen, replace with glitch-text ENTER THE GRID button | 2026-03-18 | b1672db | [260317-rg5-remove-disc-from-main-screen-replace-wit](./quick/260317-rg5-remove-disc-from-main-screen-replace-wit/) |
 
 ### Blockers/Concerns
 
@@ -80,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T23:29:48.451Z
-Stopped at: Completed 01-boot-disc-foundation plan 02 (BootSequence + audioManager)
+Last session: 2026-03-18T00:37:54.614Z
+Stopped at: Completed 01-04 EnterButton CTA for phase 2
 Resume file: None
