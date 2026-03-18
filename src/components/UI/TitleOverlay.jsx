@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 
 const GLITCH_CHARS = '0123456789ABCDEF!@#$%^&*01010110'
 
-export default function TitleOverlay({ glitch }) {
+export default function TitleOverlay({ glitch, visible = true }) {
   const [displayName, setDisplayName] = useState('TANMAY GOEL')
   const glitchInterval = useRef(null)
   const originalName = 'TANMAY GOEL'
@@ -46,6 +46,8 @@ export default function TitleOverlay({ glitch }) {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 10,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 1s ease-in',
       }}
     >
       <h1

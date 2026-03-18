@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 const useAppState = create((set) => ({
   // Phase management
-  phase: 2, // Start at Phase 2 (Identity Disc) — Phase 1 boot sequence added later
+  phase: 1, // Start at Phase 1 (Boot Sequence) — skipped via sessionStorage on repeat visits
   setPhase: (phase) => set({ phase }),
 
   // Audio
