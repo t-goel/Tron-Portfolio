@@ -66,7 +66,7 @@ function App() {
       {showBoot && <BootSequence onComplete={handleBootComplete} />}
       <Canvas
         frameloop={showBoot ? 'never' : 'always'}
-        camera={{ position: [0, 0, 8], fov: 60 }}
+        camera={{ position: [0, 8, 14], fov: 60 }}
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 2]}
         style={{ position: 'absolute', top: 0, left: 0 }}
