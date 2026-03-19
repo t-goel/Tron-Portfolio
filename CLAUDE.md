@@ -10,7 +10,7 @@ Remind me if I dont mention this. I want to prioritize speed and ease of access 
 
 Tron-themed 3D personal portfolio SPA ("Digital Dominion"). WebGL-heavy, immersive single-page app showcasing developer skills, projects, and background. See SPEC.md for full product requirements.
 
-**Status:** Pre-implementation — SPEC.md is complete, no source code yet.
+**Status:** Active development — Phase 1 complete, Phase 2+ in planning.
 
 ## Tech Stack
 
@@ -39,8 +39,8 @@ npm run preview      # preview production build locally
 The app uses phases instead of routes, managed via Zustand store (`src/store/appState.js`):
 
 1. **Boot Sequence** — Loading screen with light-cycle animation
-2. **Main Hub (Identity Disc)** — Central 3D disc with title text
-3. **Shatter & Dock** — Disc shrinks to nav button, grid powers on
+2. **Main Hub (Title Screen)** — Title text with "ENTER THE GRID" CTA button
+3. **Shatter & Dock** — Grid powers on, nav HUD appears with docked disc icon
 4. **Grid World** — 3D isometric grid with three gateway panes (About, Skills, Projects)
 5. **Sector Dives** — Content views (terminal bio, network graph, 3D monoliths)
 
@@ -51,7 +51,7 @@ All content lives in config files under `src/data/` — projects, skills, contac
 ### Key Directories
 
 - `src/components/phases/` — One component per phase
-- `src/components/3D/` — Reusable Three.js/R3F components (Grid, Disc, Panes, Monoliths)
+- `src/components/3D/` — Reusable Three.js/R3F components (Grid, Panes, Monoliths; IdentityDisc preserved for HUD nav)
 - `src/components/UI/` — 2D overlay HUD elements
 - `src/data/` — Content config files (projects.js, skills.js, contact.js)
 - `src/store/` — Zustand state store

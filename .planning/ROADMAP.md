@@ -2,7 +2,7 @@
 
 ## Overview
 
-Starting from the partially-built Phase 2 (IdentityDisc + TitleOverlay), this roadmap takes the portfolio from a static disc scene to a fully navigable Tron-universe experience. The app's natural phase flow — Boot, Shatter & Dock, Grid World, Sector Dives — maps directly to four roadmap phases at coarse granularity. Each phase delivers one complete, playable layer of the experience.
+Starting from the partially-built Phase 2 (title screen + Enter the Grid CTA), this roadmap takes the portfolio from a static title screen to a fully navigable Tron-universe experience. The app's natural phase flow — Boot, Shatter & Dock, Grid World, Sector Dives — maps directly to four roadmap phases at coarse granularity. Each phase delivers one complete, playable layer of the experience.
 
 ## Phases
 
@@ -10,7 +10,7 @@ Starting from the partially-built Phase 2 (IdentityDisc + TitleOverlay), this ro
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [x] **Phase 1: Boot + Disc Foundation** - Rebuild the IdentityDisc visual and implement the boot sequence that sets the entire experience in motion (completed 2026-03-18)
+- [x] **Phase 1: Boot + Disc Foundation** - Implement the boot sequence and title screen with Enter the Grid CTA (completed 2026-03-18)
 - [ ] **Phase 2: Shatter & Dock** - Disc docks to HUD, grid illuminates, global navigation and audio controls establish the persistent interface shell
 - [ ] **Phase 3: Grid World** - Three holographic gateway panes render in triangle formation with orbital camera, billboard behavior, and idle/hover states
 - [ ] **Phase 4: Sector Dives + Finish** - All three content sectors (Projects, About, Skills), mobile degradation, WebGL fallback, SEO, and favicon
@@ -18,29 +18,29 @@ Starting from the partially-built Phase 2 (IdentityDisc + TitleOverlay), this ro
 ## Phase Details
 
 ### Phase 1: Boot + Disc Foundation
-**Goal**: The opening experience works end-to-end — visitor sees the rebuilt disc and the boot sequence plays once per session, delivering music and the title reveal before transitioning to Phase 2
+**Goal**: The opening experience works end-to-end — visitor sees the boot sequence play once per session, then the title screen with ENTER THE GRID button, delivering music and the title reveal before transitioning to Phase 2
 **Depends on**: Nothing (first phase; existing Phase 2 scaffold is the brownfield starting point)
 **Requirements**: DISC-01, BOOT-01, BOOT-02, BOOT-03, BOOT-04, AUDIO-01, NFR-01
 **Success Criteria** (what must be TRUE):
-  1. IdentityDisc displays multiple layered concentric rings with beveled 3D depth and strong Crimson Red emissive glow matching the reference image
+  1. Title screen displays "TANMAY GOEL" / "SOFTWARE DEVELOPER" text with "ENTER THE GRID" button featuring glitch-decode animation
   2. On first load, two light-cycle sprites draw "LOADING" simultaneously (cyan top half, orange bottom half), collide, flash to white, then fade to black
   3. After the flash, background music fades in and "TANMAY GOEL" / "SOFTWARE DEVELOPER" appear centered before transitioning to the disc scene
-  4. Refreshing the page within the same session skips the boot sequence and lands directly on the disc
+  4. Refreshing the page within the same session skips the boot sequence and lands directly on the title screen
   5. Visitors without WebGL see a styled error message with direct links to GitHub, LinkedIn, and email
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Rebuild IdentityDisc 3D model with 7 torus rings and metallic center (DISC-01)
+- [ ] 01-01-PLAN.md — Rebuild IdentityDisc 3D model (preserved for HUD nav) and title screen layout (DISC-01)
 - [ ] 01-02-PLAN.md — Boot sequence animation, audio manager, phase wiring (BOOT-01/02/03/04, AUDIO-01)
 - [ ] 01-03-PLAN.md — WebGL fallback detection and error UI (NFR-01)
 - [ ] 01-04-PLAN.md — Tron-styled "ENTER THE GRID" button with hover glow (DISC-01)
 
 ### Phase 2: Shatter & Dock
-**Goal**: Clicking the disc collapses it into the top-left corner as a persistent Home button, social links appear, the grid illuminates, and the audio mute toggle and global nav HUD are always visible thereafter
+**Goal**: Clicking "ENTER THE GRID" triggers the transition — grid illuminates, CSS disc docks to top-left as Home button, social links appear, and the audio mute toggle and global nav HUD are always visible thereafter
 **Depends on**: Phase 1
 **Requirements**: DOCK-01, DOCK-02, DOCK-03, DOCK-04, AUDIO-02, NAV-01, NAV-02
 **Success Criteria** (what must be TRUE):
-  1. Clicking the disc triggers a wind-down scale animation that lerps the disc to the top-left corner where it settles into idle rotation as a Home button with "TANMAY GOEL" text beside it
+  1. Clicking "ENTER THE GRID" triggers the transition: a CSS disc element animates to the top-left corner and settles as a Home button with "TANMAY GOEL" text beside it
   2. Three social icon nodes (GitHub, LinkedIn, Email) appear as glowing circles at the bottom-right after the dock transition completes
   3. The isometric wireframe grid illuminates in Neon Cyan across the XZ plane with bloom at the horizon line
   4. A speaker icon mute toggle is visible in the bottom-right corner at all times after Phase 1 ends

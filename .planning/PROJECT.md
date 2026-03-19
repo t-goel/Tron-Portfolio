@@ -14,7 +14,7 @@ A recruiter clicking through should be wowed by the technical execution — the 
 
 - ✓ React + Vite scaffold with Three.js/R3F/Drei/Postprocessing — existing
 - ✓ Phase-based state machine via Zustand (phase constants, setPhase, audio, HUD, sector) — existing
-- ✓ IdentityDisc (Phase 2): 3D disc with procedural texture, torus rings, particle system, hover animations, grid floor preview — existing (needs visual rebuild to match reference image)
+- ✓ Title Screen (Phase 2): "TANMAY GOEL" / "SOFTWARE DEVELOPER" text with "ENTER THE GRID" glitch CTA button; IdentityDisc component preserved for docked HUD nav
 - ✓ TitleOverlay (Phase 2): "TANMAY GOEL" + "SOFTWARE DEVELOPER" with glitch effect on hover — existing
 - ✓ Design system: Void Black / Neon Cyan / Neon Orange / Crimson Red / Off-White palette, TR2N font, CSS variables — existing
 - ✓ Data config schemas: projects.js, skills.js, contact.js (schemas defined, content TBD) — existing
@@ -23,7 +23,7 @@ A recruiter clicking through should be wowed by the technical execution — the 
 ### Active
 
 - [ ] Phase 1: Boot Sequence — two light-cycle sprites trace "LOADING" (cyan top half, orange bottom half), collision flash fills viewport, fade to black, music + title fade in
-- [ ] Phase 3: Shatter & Dock transition — disc scales down and lerps to top-left as Home button, social icons appear bottom-right, grid powers on permanently
+- [ ] Phase 3: Shatter & Dock transition — grid illuminates, CSS disc docks to top-left as Home button, social icons and mute toggle appear
 - [ ] Phase 4: Grid World — three holographic gateway panes (About / Skills / Projects) in triangle formation, orbital camera (OrbitControls), billboarding, idle/hover states
 - [ ] Phase 5a: Projects Sector — three 3D monoliths rise from grid with name, tagline, tech tags, accent color; hover bob animation; click opens GitHub URL
 - [ ] Phase 5b: About Me Sector — pane expands to full viewport, 2D terminal interface auto-types bio as bash commands with clickable contact links

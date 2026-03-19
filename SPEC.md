@@ -36,7 +36,7 @@
 | Void Black | `#000000` | Primary background environment |
 | Neon Cyan | `#00FFFF` | Grid, main UI elements, project accent |
 | Neon Orange | `#FF5E00` | Project accent, highlight states |
-| Crimson Red | `#FF0000` | Identity Disc, "TANMAY GOEL" typography |
+| Crimson Red | `#FF0000` | "TANMAY GOEL" typography, HUD nav disc, "ENTER THE GRID" button glow |
 | White/Off-White | `#F0F0F0` | "SOFTWARE DEVELOPER" subtitle, terminal text |
 
 > Each project monolith gets a distinct accent color drawn from the palette above. Assigned per project in the data config (see Section 7.1).
@@ -54,8 +54,8 @@ The app is a Single Page Application with distinct "Phases" controlled by camera
 ```
 Phase 1: Boot Sequence (Loading)
     ↓ [auto-completes]
-Phase 2: Main Hub (Disc at center)
-    ↓ [onClick: disc]
+Phase 2: Main Hub (Title + Enter Button)
+    ↓ [onClick: ENTER THE GRID button]
 Phase 3: "black" Transition (one-time)
     ↓ [auto-completes]
 Phase 4: Grid World & 3D Gateways (main nav)
@@ -70,7 +70,7 @@ Phase 5: Sector Dive (About / Skills / Projects)
 
 ### FR1: Boot Sequence (Phase 1 — Loading State)
 
-**FR1.0** The boot sequence plays **only on the user's first visit**. Store a flag in `sessionStorage` on completion. On subsequent page loads within the same session (reloads, new tabs), skip directly to **Phase 2** (Identity Disc).
+**FR1.0** The boot sequence plays **only on the user's first visit**. Store a flag in `sessionStorage` on completion. On subsequent page loads within the same session (reloads, new tabs), skip directly to **Phase 2** (Title Screen).
 
 **FR1.1** On initial load, display a pure black (`#000000`) viewport with no other elements visible.
 
@@ -90,44 +90,41 @@ Phase 5: Sector Dive (About / Skills / Projects)
 **FR1.5** From the black screen:
 - The track **"Just Turn It On and Make Something"** (open-source) **fades in**
 - **"TANMAY GOEL"** (Red, TR2N font) and **"SOFTWARE DEVELOPER"** (White, Roboto Mono) **fade in** at center screen
-- Scene transitions into **Phase 2** (Identity Disc renders behind the text, which is already in position)
+- Scene transitions into **Phase 2** (title screen with "ENTER THE GRID" button, text already in position)
 
 ---
 
-### FR2: Main Hub — The Identity Disc (Phase 2)
+### FR2: Main Hub — Title Screen (Phase 2)
 
-**FR2.1** Render a **3D Identity Disc** centered at world origin `(0, 0, 0)`:
-- Dark metallic body texture
-- Glowing **Crimson Red** rings
-- Slow idle rotation on its Y-axis
+**FR2.1** The main hub displays the **title text** and **"ENTER THE GRID" CTA button** centered on a black void background:
+- The button features a **glitch-decode character animation** on mount
+- The button text **re-glitches** on hover
 
-**FR2.2** Render 2D text overlays:
-- **"TANMAY GOEL"** — Red (`#FF0000`), TR2N font, positioned above the disc
-- **"SOFTWARE DEVELOPER"** — Off-White (`#F0F0F0`), Roboto Mono font, positioned below the disc
+**FR2.2** Render 2D text overlays centered on screen (no disc behind them):
+- **"TANMAY GOEL"** — Red (`#FF0000`), TR2N font, centered at top of layout
+- **"SOFTWARE DEVELOPER"** — Off-White (`#F0F0F0`), Roboto Mono font, centered below the name
 
-**FR2.3 — Hover State:** On cursor hover over the disc:
-- The outer red ring **spins rapidly** on the Z-axis
-- **Red circuit-line energy particles** shoot outward from the disc into the black void
-- The particles **briefly illuminate a faint isometric grid floor** beneath, which fades when the cursor leaves
-- **"TANMAY GOEL"** text **glitches** — cycling through random hex strings and binary sequences before snapping back
+**FR2.3 — Hover State:** Hovering the **"ENTER THE GRID"** button triggers a brief **glitch animation** on the button text.
+
+**FR2.4** Clicking **"ENTER THE GRID"** transitions to Phase 3.
 
 ---
 
 ### FR3: "Shatter & Dock" Transition (Phase 3)
 
-Triggered by `onClick` on the central Identity Disc.
+Triggered by `onClick` on the **"ENTER THE GRID"** button.
 
 **FR3.1 — Audio:** The track **"Last Stop by Karl Casey"** (open-source) is already playing (started in FR1.6) and continues looping for the rest of the session. A **mute/unmute toggle** (small speaker icon) is rendered in the HUD  in the bottom-right corner, allowing the user to control audio at any time.
 
-**FR3.2 — Disc Docks:** The central disc:
-- Rapidly **scales down by ~80%**
-- **Lerps to the top-left corner** of the screen with a spinning wind-down animation
+**FR3.2 — Disc Docks:** The `IdentityDisc` component is NOT on screen during Phase 2. Instead, a **CSS-based disc element** appears and animates to the top-left corner as the Home button:
+- A circular DOM div **appears at viewport center** at the start of the transition
+- **Lerps to the top-left corner** with a spinning wind-down animation
 - Settles into a **slow, persistent idle rotation** — this is now the global Home button
 - The **"TANMAY GOEL"** text snaps into place beside the disc in the top-left HUD
 
 **FR3.3 — Social Links:** Fade in three glowing circular icon nodes in the **bottom-right corner**: GitHub, LinkedIn, Email
 
-**FR3.4 — Grid Powers On:** The faint hover-state grid permanently locks in and illuminates:
+**FR3.4 — Grid Powers On:** The grid illuminates fresh as part of the transition:
 - Glowing **Neon Cyan** isometric wireframe on the XZ plane
 - Grid extends along the Z-axis away from the camera
 - Terminates at a **horizon line** located ~2/3 of the way up the viewport
@@ -280,7 +277,7 @@ $ cat contact/email
 
 ### FR6: Global Navigation — The Escape Hatch
 
-**FR6.1** The top-left HUD (**small red disc + "TANMAY GOEL" text**) is **always fixed, always visible, and always clickable** during Phase 4 and Phase 5.
+**FR6.1** The top-left HUD (**small red disc icon + "TANMAY GOEL" text**) is **always fixed, always visible, and always clickable** during Phase 4 and Phase 5.
 
 **FR6.2** Clicking the HUD triggers:
 - A **high-speed reverse camera lerp** back to the Phase 4 default camera position (facing the three gateway panes)

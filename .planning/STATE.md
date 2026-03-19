@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-04 EnterButton CTA for phase 2
-last_updated: "2026-03-18T00:37:54.617Z"
-last_activity: 2026-03-17 — Roadmap created; brownfield context mapped (Phase 2 disc + TitleOverlay existing)
+stopped_at: "Completed quick task 260318-qle: update spec and planning files (Identity Disc -> Title Screen)"
+last_updated: "2026-03-19T00:15:10.554Z"
+last_activity: "2026-03-18 - Completed quick task 260317-s7f: UI polish: neon glow, hierarchy, anchor CTA, thicker button border"
 progress:
   total_phases: 4
   completed_phases: 1
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 Phase: 1 of 4 (Boot + Disc Foundation)
 Plan: 0 of 3 in current phase
 Status: Ready to plan
-Last activity: 2026-03-18 - Completed quick task 260317-s7f: UI polish: neon glow, hierarchy, anchor CTA, thicker button border
+Last activity: 2026-03-19 - Completed quick task 260318-qle: Update spec and planning files: identity disc removed, Enter the Grid button replaces it
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -73,6 +73,7 @@ Recent decisions affecting current work:
 - [Phase 01-boot-disc-foundation]: useMemo for detectWebGL call — synchronous boolean, memoized once on mount, no state re-render
 - [Phase 01-boot-disc-foundation]: Early return before Canvas mount — ensures no Three.js/R3F initialization without WebGL
 - [Phase 01-boot-disc-foundation]: EnterButton is sole phase 2->3 CTA — disc click handler removed to avoid double affordance confusion
+- [Phase quick]: Documentation sync: Title Screen replaces Identity Disc as Phase 2 hub in all spec/planning files after quick tasks 260317-rg5 and 260317-s7f
 
 ### Pending Todos
 
@@ -84,6 +85,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 260317-rg5 | Remove disc from main screen, replace with glitch-text ENTER THE GRID button | 2026-03-18 | b1672db | [260317-rg5-remove-disc-from-main-screen-replace-wit](./quick/260317-rg5-remove-disc-from-main-screen-replace-wit/) |
 | 260317-s7f | UI polish: neon glow, hierarchy, anchor CTA, thicker button border | 2026-03-18 | bb80f05 | [260317-s7f-ui-polish-neon-glow-hierarchy-anchor-cta](./quick/260317-s7f-ui-polish-neon-glow-hierarchy-anchor-cta/) |
+| 260318-qle | Update spec and planning files: identity disc removed, Enter the Grid button replaces it | 2026-03-19 | 7315793 | [260318-qle-update-spec-and-planning-files-identity-](./quick/260318-qle-update-spec-and-planning-files-identity-/) |
 
 ### Blockers/Concerns
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T00:37:54.614Z
-Stopped at: Completed 01-04 EnterButton CTA for phase 2
+Last session: 2026-03-19T00:15:07.636Z
+Stopped at: Completed quick task 260318-qle: update spec and planning files (Identity Disc -> Title Screen)
 Resume file: None
