@@ -29,7 +29,7 @@
 - [x] **GRID-02**: Orbital camera via OrbitControls — full 360° horizontal pan, vertical restricted to prevent seeing under grid
 - [x] **GRID-03**: All three panes Y-axis billboard to continuously face camera regardless of camera position
 - [x] **GRID-04**: Pane idle state displays chaotic 2D wireframe art and ASCII/hex text streams as surface texture
-- [ ] **GRID-05**: Pane hover state — wireframes snap to clean symmetrical structure, text decrypts to reveal pane label, light pulse ripples outward across grid floor from pane base
+- [x] **GRID-05**: Pane hover state — wireframes snap to clean symmetrical structure, text decrypts to reveal pane label, light pulse ripples outward across grid floor from pane base
 
 ### Projects Sector (Phase 5a)
 
@@ -69,7 +69,7 @@
 
 - [x] **NFR-01**: WebGL unavailability detected on page load; shows styled error: "This experience requires WebGL" with direct links to GitHub, LinkedIn, and email
 - [ ] **NFR-02**: Mobile graceful degradation (<768px): boot sequence scales to fit, OrbitControls disabled, gateway panes stacked vertically in scrollable 2D overlay, simplified static grid loops in background
-- [ ] **NFR-03**: WebGL canvas maintains stable 60 FPS on modern desktop; instanced meshes used for grid lines and particles to minimize draw calls
+- [x] **NFR-03**: WebGL canvas maintains stable 60 FPS on modern desktop; instanced meshes used for grid lines and particles to minimize draw calls
 - [ ] **NFR-04**: Open Graph meta tags — OG title "Tanmay Goel — Software Developer", OG description, OG image matching Phase 2 visual on black background
 - [ ] **NFR-05**: Favicon is a glowing Crimson Red "T" in TR2N font on black background
 
@@ -121,8 +121,8 @@
 | GRID-02 | Phase 3 — Grid World | Complete |
 | GRID-03 | Phase 3 — Grid World | Complete |
 | GRID-04 | Phase 3 — Grid World | Complete |
-| GRID-05 | Phase 3 — Grid World | Pending |
-| NFR-03 | Phase 3 — Grid World | Pending |
+| GRID-05 | Phase 3 — Grid World | Complete |
+| NFR-03 | Phase 3 — Grid World | Complete |
 | PROJ-01 | Phase 4 — Sector Dives + Finish | Pending |
 | PROJ-02 | Phase 4 — Sector Dives + Finish | Pending |
 | PROJ-03 | Phase 4 — Sector Dives + Finish | Pending |

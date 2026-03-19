@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-grid-world-01-PLAN.md
-last_updated: "2026-03-19T04:06:51.066Z"
+stopped_at: Completed 03-grid-world-02-PLAN.md (awaiting Task 2 visual checkpoint)
+last_updated: "2026-03-19T04:10:17.701Z"
 last_activity: "2026-03-19 - Completed quick task 260318-qle: Update spec and planning files: identity disc removed, Enter the Grid button replaces it"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-shatter-dock P01 | 3 | 2 tasks | 5 files |
 | Phase 02-shatter-dock P02 | 5 | 1 tasks | 2 files |
 | Phase 03-grid-world P01 | 5 | 2 tasks | 4 files |
+| Phase 03-grid-world P02 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 02-shatter-dock]: MuteToggle delegates audio management to App.jsx subscription — toggle only calls toggleAudio(), no direct Howler calls
 - [Phase 03-grid-world]: useMemo for CanvasTexture — synchronous creation avoids null map on first render frame
 - [Phase 03-grid-world]: forwardRef on GatewayPane — required for GatewayPanes to animate Three.js position.y via GSAP
+- [Phase 03-grid-world]: unified drawFrame replaces drawIdleFrame - single function handles 0-1 decrypt progress spectrum
+- [Phase 03-grid-world]: fragment wrapper on GatewayPane return - ring mesh outside billboard group to stay flat on grid floor
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T04:06:51.063Z
-Stopped at: Completed 03-grid-world-01-PLAN.md
+Last session: 2026-03-19T04:10:17.697Z
+Stopped at: Completed 03-grid-world-02-PLAN.md (awaiting Task 2 visual checkpoint)
 Resume file: None
