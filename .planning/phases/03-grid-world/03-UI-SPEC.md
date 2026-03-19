@@ -54,26 +54,30 @@ Exceptions:
 
 ## Typography
 
-### DOM / HUD Layer
+### DOM / HUD Layer (Design-System Type Scale)
+
+Exactly 4 sizes. The Canvas 2D layer uses its own render-context sizes documented separately below — those are NOT part of the design-system type scale.
 
 | Role | Size | Font | Weight | Line Height | Letter Spacing |
 |------|------|------|--------|-------------|----------------|
 | Display (name) | clamp(2rem, 5vw, 4rem) | TR2N | 400 (normal) | 1.2 | 0.3em |
-| Label (subtitle) | clamp(0.7rem, 1.5vw, 1rem) | Roboto Mono | 400 | 1.4 | 0.5em |
 | CTA button | clamp(1.2rem, 3vw, 2rem) | TR2N | 400 | 1.0 | 0.35em |
+| Label (subtitle) | clamp(0.7rem, 1.5vw, 1rem) | Roboto Mono | 400 | 1.4 | 0.5em |
 | HUD micro | 14px | Roboto Mono | 400 | 1.4 | 0.2em |
+
+Hierarchy (largest to smallest): Display > CTA button > Label > HUD micro. Each step is a meaningful size reduction. Two weights used: 400 (normal) only — TR2N and Roboto Mono are used at regular weight throughout this phase.
 
 Source: src/components/UI/TitleOverlay.jsx and EnterButton.jsx inline styles — these values are locked from Phase 1/2 implementation.
 
-### Canvas 2D Pane Texture Layer (Phase 3 new)
+### Canvas 2D Pane Texture Layer (Render-Context Sizes — Not Design-System Type Scale)
 
-| Role | Size | Font | Weight | Usage |
-|------|------|------|--------|-------|
-| Idle stream characters | 8px | Roboto Mono | 400 | Random hex/ASCII glyph cells on 8×8px grid |
-| Decrypting characters | 8px | Roboto Mono | 400 | Transition — random glyph → label character |
-| Revealed pane label | 16px | TR2N | 400 | Final state: ">_ ABOUT_ME", ">_ SKILLS", ">_ PROJECTS" |
+These sizes are set via `ctx.font` on an offscreen `<canvas>` element. They are scoped to the Canvas 2D rendering context and do not participate in the DOM type hierarchy above. Canvas does not inherit CSS font-face declarations automatically — ensure fonts are pre-loaded via DOM before drawing (FontFace API or a hidden DOM element referencing each font).
 
-Note: Canvas 2D fonts are set via `ctx.font` string — use `"8px 'Roboto Mono', monospace"` for stream and `"16px 'TR2N', sans-serif"` for revealed label. Canvas does not inherit CSS font-face declarations automatically; ensure fonts are pre-loaded via DOM before drawing (FontFace API or a hidden DOM element using each font).
+| Role | ctx.font String | Usage |
+|------|----------------|-------|
+| Idle stream characters | `"8px 'Roboto Mono', monospace"` | Random hex/ASCII glyph cells on 8×8px grid — active in idle and decrypt-transition states |
+| Decrypting characters | `"8px 'Roboto Mono', monospace"` | Transition — random glyph → label character (same size as idle stream) |
+| Revealed pane label | `"16px 'TR2N', sans-serif"` | Final state after decrypt completes: `>_ ABOUT_ME`, `>_ SKILLS`, `>_ PROJECTS`, drawn centered, color #00FFFF |
 
 ---
 
