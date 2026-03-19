@@ -67,7 +67,7 @@ export default function TitleOverlay({ glitch, visible = true, children }) {
         pointerEvents: 'none',
         zIndex: 10,
         opacity: visible ? 1 : 0,
-        transition: 'opacity 1s ease-in',
+        transition: 'opacity 0.15s ease-out',
       }}
     >
       <h1

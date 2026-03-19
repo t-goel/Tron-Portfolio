@@ -39,6 +39,17 @@ function App() {
     return unsub
   }, [])
 
+  // NAV-04: ESC exits any active sector back to grid
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && useAppState.getState().activeSector !== null) {
+        useAppState.getState().setActiveSector(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   // GSAP dock animation: fires when phase transitions to 3
   useEffect(() => {
     if (phase !== 3 || !domDiscRef.current) return

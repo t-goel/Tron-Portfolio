@@ -86,8 +86,8 @@ function drawFrame(ctx, seed, decryptProgress, label) {
   // above takes over and renders the label as part of the reveal animation,
   // so this block must not run in parallel with that path.
   if (decryptProgress === 0) {
-    ctx.font = "14px 'TR2N', sans-serif"
-    ctx.fillStyle = 'rgba(0,255,255,0.35)'
+    ctx.font = "18px 'TR2N', sans-serif"
+    ctx.fillStyle = 'rgba(0,255,255,0.75)'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillText(label, 120, 80)

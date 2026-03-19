@@ -8,6 +8,19 @@ A fully immersive, 3D-navigable personal portfolio website inspired by the visua
 
 A recruiter clicking through should be wowed by the technical execution — the portfolio IS the proof of skill.
 
+## Current Milestone: v1.1 Immersion Polish
+
+**Goal:** Deepen UX immersion through a Tron-themed loading screen, visible panel labels, navigation affordances, cinematic sector exit, and interactive terminal.
+
+**Target features:**
+- Tron terminal boot loading screen (dark bg, monospace scrolling boot log)
+- Gateway pane labels ("SKILLS", "PROJECTS", "ABOUT ME") visible by default
+- Navigation affordance hint on first grid entry
+- Disc click returns to grid from sectors + ESC key exits sectors
+- Hyper-reverse camera warp animation on sector exit
+- Interactive About terminal with "exit" command
+- Title screen text timing fix (clear faster on CTA click)
+
 ## Requirements
 
 ### Validated
@@ -28,12 +41,15 @@ A recruiter clicking through should be wowed by the technical execution — the 
 
 ### Active
 
-- [ ] ENH-01: OrbitControls inertia/momentum for smoother camera feel
-- [ ] ENH-02: Sound effects on hover/click interactions (disc, panes, monoliths)
-- [ ] ENH-03: Particle trails on camera movement through grid
-- [ ] CONT-01: More than 3 project monoliths (extend projects.js data config)
-- [ ] CONT-02: Resume/CV download link in About Me terminal
-- [ ] CONT-03: Blog or writing section as fourth gateway pane
+- [ ] BOOT-05: Loading screen uses Tron terminal boot aesthetic (dark bg, monospace scrolling boot log)
+- [ ] PANE-01: Gateway pane labels ("SKILLS", "PROJECTS", "ABOUT ME") visible by default
+- [ ] PANE-02: Navigation affordance hint displayed on first grid entry
+- [ ] NAV-03: Disc click returns user to grid (not home) when inside a sector
+- [ ] NAV-04: ESC key exits active sector back to grid
+- [ ] NAV-05: Hyper-reverse camera warp animation on sector exit
+- [ ] ABOUT-05: Interactive About terminal accepts typed input; "exit" command exits sector
+- [ ] ABOUT-06: Terminal displays hint that user can type "exit" to leave
+- [ ] TITLE-01: Title screen text clears faster/smoother when CTA button is clicked
 
 ### Out of Scope
 
@@ -77,4 +93,4 @@ A recruiter clicking through should be wowed by the technical execution — the 
 | 2D card overlay for Projects sector | 3D monolith fly-through proved complex; 2D overlay delivers content faster; monoliths preserved as decorative background | ⚠️ Revisit for v1.1 |
 
 ---
-*Last updated: 2026-03-19 after v1.0 milestone*
+*Last updated: 2026-03-19 after v1.1 Immersion Polish milestone start*
