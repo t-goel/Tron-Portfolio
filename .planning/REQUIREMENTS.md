@@ -18,10 +18,10 @@
 
 ### Shatter & Dock (Phase 3)
 
-- [ ] **DOCK-01**: On disc click, disc scales down ~80% and lerps to top-left corner with spinning wind-down, settling into persistent idle rotation as Home button
-- [ ] **DOCK-02**: "TANMAY GOEL" text snaps into position beside the docked disc in the top-left HUD
-- [ ] **DOCK-03**: Three social icon nodes (GitHub, LinkedIn, Email) fade in at bottom-right corner as glowing circles
-- [ ] **DOCK-04**: Grid permanently illuminates as glowing Neon Cyan isometric wireframe on XZ plane with bloom/lens flare at horizon line
+- [x] **DOCK-01**: On disc click, disc scales down ~80% and lerps to top-left corner with spinning wind-down, settling into persistent idle rotation as Home button
+- [x] **DOCK-02**: "TANMAY GOEL" text snaps into position beside the docked disc in the top-left HUD
+- [x] **DOCK-03**: Three social icon nodes (GitHub, LinkedIn, Email) fade in at bottom-right corner as glowing circles
+- [x] **DOCK-04**: Grid permanently illuminates as glowing Neon Cyan isometric wireframe on XZ plane with bloom/lens flare at horizon line
 
 ### Grid World (Phase 4)
 
@@ -58,12 +58,12 @@
 ### Audio
 
 - [x] **AUDIO-01**: Background music (Howler.js) fades in during Phase 1 boot sequence and loops for the entire session
-- [ ] **AUDIO-02**: Mute/unmute toggle (speaker icon) visible in bottom-right HUD corner at all times after Phase 1
+- [x] **AUDIO-02**: Mute/unmute toggle (speaker icon) visible in bottom-right HUD corner at all times after Phase 1
 
 ### Global Navigation
 
-- [ ] **NAV-01**: Top-left HUD (small red disc + "TANMAY GOEL" text) is always fixed, visible, and clickable during Phase 4 and Phase 5
-- [ ] **NAV-02**: Clicking HUD triggers high-speed reverse camera lerp to Phase 4 default position, fades out sector content, fades in all three panes, restores horizon line and grid
+- [x] **NAV-01**: Top-left HUD (small red disc + "TANMAY GOEL" text) is always fixed, visible, and clickable during Phase 4 and Phase 5
+- [x] **NAV-02**: Clicking HUD triggers high-speed reverse camera lerp to Phase 4 default position, fades out sector content, fades in all three panes, restores horizon line and grid
 
 ### Non-Functional
 
@@ -110,13 +110,13 @@
 | BOOT-04 | Phase 1 — Boot + Disc Foundation | Complete |
 | AUDIO-01 | Phase 1 — Boot + Disc Foundation | Complete |
 | NFR-01 | Phase 1 — Boot + Disc Foundation | Complete |
-| DOCK-01 | Phase 2 — Shatter & Dock | Pending |
-| DOCK-02 | Phase 2 — Shatter & Dock | Pending |
-| DOCK-03 | Phase 2 — Shatter & Dock | Pending |
-| DOCK-04 | Phase 2 — Shatter & Dock | Pending |
-| AUDIO-02 | Phase 2 — Shatter & Dock | Pending |
-| NAV-01 | Phase 2 — Shatter & Dock | Pending |
-| NAV-02 | Phase 2 — Shatter & Dock | Pending |
+| DOCK-01 | Phase 2 — Shatter & Dock | Complete |
+| DOCK-02 | Phase 2 — Shatter & Dock | Complete |
+| DOCK-03 | Phase 2 — Shatter & Dock | Complete |
+| DOCK-04 | Phase 2 — Shatter & Dock | Complete |
+| AUDIO-02 | Phase 2 — Shatter & Dock | Complete |
+| NAV-01 | Phase 2 — Shatter & Dock | Complete |
+| NAV-02 | Phase 2 — Shatter & Dock | Complete |
 | GRID-01 | Phase 3 — Grid World | Pending |
 | GRID-02 | Phase 3 — Grid World | Pending |
 | GRID-03 | Phase 3 — Grid World | Pending |

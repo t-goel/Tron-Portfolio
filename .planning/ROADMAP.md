@@ -11,10 +11,9 @@ Starting from the partially-built Phase 2 (title screen + Enter the Grid CTA), t
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Boot + Disc Foundation** - Implement the boot sequence and title screen with Enter the Grid CTA (completed 2026-03-18)
-- [ ] **Phase 2: Shatter & Dock** - Disc docks to HUD, grid illuminates, global navigation and audio controls establish the persistent interface shell
+- [x] **Phase 2: Shatter & Dock** - Disc docks to HUD, grid illuminates, global navigation and audio controls establish the persistent interface shell (completed 2026-03-19)
 - [ ] **Phase 3: Grid World** - Three holographic gateway panes render in triangle formation with orbital camera, billboard behavior, and idle/hover states
-- [ ] **Phase 4: Sector Dives + Finish** - All three content sectors (Projects, About, Skills), mobile degradation, WebGL fallback, SEO, and favicon
-
+- [ ] **Phase 4: Sector Dives + Finish** - All three content sectors (Projects, About, Skills) fully navigable with deployable SEO and mobile degradation
 ## Phase Details
 
 ### Phase 1: Boot + Disc Foundation
@@ -45,11 +44,11 @@ Plans:
   3. The isometric wireframe grid illuminates in Neon Cyan across the XZ plane with bloom at the horizon line
   4. A speaker icon mute toggle is visible in the bottom-right corner at all times after Phase 1 ends
   5. The top-left disc + name HUD is always visible and clickable during Phases 4 and 5, and clicking it returns the camera to the Phase 4 default position
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Disc dock animation, social icons, grid illumination (DOCK-01/02/03/04)
-- [ ] 02-02: Persistent HUD shell — mute toggle, global nav (AUDIO-02, NAV-01, NAV-02)
+- [ ] 02-01-PLAN.md — Disc dock animation, grid illumination, HUD home button, social icons (DOCK-01/02/03/04)
+- [ ] 02-02-PLAN.md — Mute toggle, global nav validation (AUDIO-02, NAV-01, NAV-02)
 
 ### Phase 3: Grid World
 **Goal**: The grid world is fully navigable — three holographic panes are visible in triangle formation, the camera orbits freely, panes billboard to face the camera, and hover states reveal pane identity with light pulse effects
@@ -94,6 +93,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Boot + Disc Foundation | 4/4 | Complete   | 2026-03-18 |
-| 2. Shatter & Dock | 0/2 | Not started | - |
+| 2. Shatter & Dock | 2/2 | Complete   | 2026-03-19 |
 | 3. Grid World | 0/2 | Not started | - |
 | 4. Sector Dives + Finish | 0/4 | Not started | - |

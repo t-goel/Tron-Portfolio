@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: "Completed quick task 260318-qle: update spec and planning files (Identity Disc -> Title Screen)"
-last_updated: "2026-03-19T00:15:10.554Z"
-last_activity: "2026-03-18 - Completed quick task 260317-s7f: UI polish: neon glow, hierarchy, anchor CTA, thicker button border"
+stopped_at: Phase 3 context gathered
+last_updated: "2026-03-19T01:28:15.306Z"
+last_activity: "2026-03-19 - Completed quick task 260318-qle: Update spec and planning files: identity disc removed, Enter the Grid button replaces it"
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -54,6 +54,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-boot-disc-foundation P02 | 18 | 3 tasks | 6 files |
 | Phase 01-boot-disc-foundation P03 | 2 | 2 tasks | 3 files |
 | Phase 01-boot-disc-foundation P04 | 5 | 2 tasks | 3 files |
+| Phase 02-shatter-dock P01 | 3 | 2 tasks | 5 files |
+| Phase 02-shatter-dock P02 | 5 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 01-boot-disc-foundation]: Early return before Canvas mount — ensures no Three.js/R3F initialization without WebGL
 - [Phase 01-boot-disc-foundation]: EnterButton is sole phase 2->3 CTA — disc click handler removed to avoid double affordance confusion
 - [Phase quick]: Documentation sync: Title Screen replaces Identity Disc as Phase 2 hub in all spec/planning files after quick tasks 260317-rg5 and 260317-s7f
+- [Phase 02-shatter-dock]: DOM disc stays visible during GSAP animation then replaced by CSS hud-disc after dock completes via hudVisible state gate
+- [Phase 02-shatter-dock]: HUD home button onClick resets both phase (2) and hudVisible (false) so TitleOverlay re-renders cleanly
+- [Phase 02-shatter-dock]: MuteToggle delegates audio management to App.jsx subscription — toggle only calls toggleAudio(), no direct Howler calls
 
 ### Pending Todos
 
@@ -94,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T00:15:07.636Z
-Stopped at: Completed quick task 260318-qle: update spec and planning files (Identity Disc -> Title Screen)
-Resume file: None
+Last session: 2026-03-19T01:28:15.297Z
+Stopped at: Phase 3 context gathered
+Resume file: .planning/phases/03-grid-world/03-CONTEXT.md
