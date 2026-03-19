@@ -94,5 +94,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Boot + Disc Foundation | 4/4 | Complete   | 2026-03-18 |
 | 2. Shatter & Dock | 2/2 | Complete   | 2026-03-19 |
-| 3. Grid World | 0/2 | Not started | - |
+| 3. Grid World | 1/2 | In Progress|  |
 | 4. Sector Dives + Finish | 0/4 | Not started | - |

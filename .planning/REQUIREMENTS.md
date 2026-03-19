@@ -25,10 +25,10 @@
 
 ### Grid World (Phase 4)
 
-- [ ] **GRID-01**: Three semi-transparent holographic glass panes (>_ ABOUT_ME, >_ SKILLS, >_ PROJECTS) rendered in triangle formation rising from grid floor
-- [ ] **GRID-02**: Orbital camera via OrbitControls — full 360° horizontal pan, vertical restricted to prevent seeing under grid
-- [ ] **GRID-03**: All three panes Y-axis billboard to continuously face camera regardless of camera position
-- [ ] **GRID-04**: Pane idle state displays chaotic 2D wireframe art and ASCII/hex text streams as surface texture
+- [x] **GRID-01**: Three semi-transparent holographic glass panes (>_ ABOUT_ME, >_ SKILLS, >_ PROJECTS) rendered in triangle formation rising from grid floor
+- [x] **GRID-02**: Orbital camera via OrbitControls — full 360° horizontal pan, vertical restricted to prevent seeing under grid
+- [x] **GRID-03**: All three panes Y-axis billboard to continuously face camera regardless of camera position
+- [x] **GRID-04**: Pane idle state displays chaotic 2D wireframe art and ASCII/hex text streams as surface texture
 - [ ] **GRID-05**: Pane hover state — wireframes snap to clean symmetrical structure, text decrypts to reveal pane label, light pulse ripples outward across grid floor from pane base
 
 ### Projects Sector (Phase 5a)
@@ -117,10 +117,10 @@
 | AUDIO-02 | Phase 2 — Shatter & Dock | Complete |
 | NAV-01 | Phase 2 — Shatter & Dock | Complete |
 | NAV-02 | Phase 2 — Shatter & Dock | Complete |
-| GRID-01 | Phase 3 — Grid World | Pending |
-| GRID-02 | Phase 3 — Grid World | Pending |
-| GRID-03 | Phase 3 — Grid World | Pending |
-| GRID-04 | Phase 3 — Grid World | Pending |
+| GRID-01 | Phase 3 — Grid World | Complete |
+| GRID-02 | Phase 3 — Grid World | Complete |
+| GRID-03 | Phase 3 — Grid World | Complete |
+| GRID-04 | Phase 3 — Grid World | Complete |
 | GRID-05 | Phase 3 — Grid World | Pending |
 | NFR-03 | Phase 3 — Grid World | Pending |
 | PROJ-01 | Phase 4 — Sector Dives + Finish | Pending |
