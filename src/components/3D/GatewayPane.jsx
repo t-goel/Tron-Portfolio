@@ -5,26 +5,22 @@ import * as THREE from 'three'
 const CHAR_SET = '0123456789ABCDEF\u2554\u2557\u255A\u255D\u2551\u2550\u2560\u2563\u2566\u2569\u256C01>_/\\'
 
 function drawFrame(ctx, seed, decryptProgress, label) {
-  ctx.fillStyle = '#000000'
+  // Dark semi-transparent background so the teal glass shows through slightly
+  ctx.clearRect(0, 0, 240, 160)
+  ctx.fillStyle = 'rgba(0, 8, 12, 0.92)'
   ctx.fillRect(0, 0, 240, 160)
 
-  ctx.font = "8px 'Roboto Mono', monospace"
+  ctx.font = "9px 'Roboto Mono', monospace"
 
-  // Label layout: center the label string on the canvas
-  // Canvas is 30 cols x 20 rows at 8px each
-  // We'll mark which cells correspond to label characters
   const labelChars = Array.from(label)
   const totalCols = 30
   const totalRows = 20
-  const totalCells = totalCols * totalRows // 600
+  const totalCells = totalCols * totalRows
 
-  // Center label: figure out start column
   const labelStartCol = Math.floor((totalCols - labelChars.length) / 2)
   const labelRow = Math.floor(totalRows / 2)
 
-  // Build a set of cells that are label cells
-  // cellIndex = row * 30 + col
-  const labelCellMap = new Map() // cellIndex -> char
+  const labelCellMap = new Map()
   for (let i = 0; i < labelChars.length; i++) {
     const col = labelStartCol + i
     if (col >= 0 && col < totalCols) {
@@ -37,29 +33,24 @@ function drawFrame(ctx, seed, decryptProgress, label) {
     for (let col = 0; col < totalCols; col++) {
       const cellIndex = row * totalCols + col
       const x = col * 8 + 1
-      const y = row * 8 + 7
+      const y = row * 8 + 8
 
       if (cellIndex / totalCells < decryptProgress) {
-        // Revealed zone
         if (labelCellMap.has(cellIndex)) {
-          // Draw label character
           ctx.fillStyle = '#00FFFF'
           ctx.fillText(labelCellMap.get(cellIndex), x, y)
-        } else {
-          // Blank — cleared
-          // (no draw = transparent/black)
         }
+        // else blank (revealed zone, non-label)
       } else {
-        // Chaotic zone — random character
         const charIndex = Math.floor((Math.random() + seed * 0.1) * CHAR_SET.length) % CHAR_SET.length
         const char = CHAR_SET[charIndex]
         const colorRoll = Math.random()
-        if (colorRoll < 0.4) {
-          ctx.fillStyle = '#00FFFF'
-        } else if (colorRoll < 0.7) {
-          ctx.fillStyle = 'rgba(255,94,0,0.6)'
+        if (colorRoll < 0.5) {
+          ctx.fillStyle = 'rgba(0,255,255,0.85)'
+        } else if (colorRoll < 0.75) {
+          ctx.fillStyle = 'rgba(255,94,0,0.7)'
         } else {
-          ctx.fillStyle = 'rgba(240,240,240,0.4)'
+          ctx.fillStyle = 'rgba(240,240,240,0.5)'
         }
         ctx.fillText(char, x, y)
       }
@@ -68,27 +59,19 @@ function drawFrame(ctx, seed, decryptProgress, label) {
 
   // Wireframe lines
   if (decryptProgress > 0.8) {
-    // Snap to clean symmetric crosshatch
-    ctx.strokeStyle = 'rgba(0,255,255,0.25)'
+    ctx.strokeStyle = 'rgba(0,255,255,0.35)'
     ctx.lineWidth = 1
     const hLines = [40, 80, 120]
     const vLines = [60, 120, 180]
     for (const hy of hLines) {
-      ctx.beginPath()
-      ctx.moveTo(0, hy)
-      ctx.lineTo(240, hy)
-      ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(0, hy); ctx.lineTo(240, hy); ctx.stroke()
     }
     for (const vx of vLines) {
-      ctx.beginPath()
-      ctx.moveTo(vx, 0)
-      ctx.lineTo(vx, 160)
-      ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, 160); ctx.stroke()
     }
   } else {
-    // Random faint lines like idle
     const lineCount = 3 + Math.floor(Math.random() * 3)
-    ctx.strokeStyle = 'rgba(0,255,255,0.15)'
+    ctx.strokeStyle = 'rgba(0,255,255,0.2)'
     ctx.lineWidth = 1
     for (let i = 0; i < lineCount; i++) {
       ctx.beginPath()
@@ -98,17 +81,15 @@ function drawFrame(ctx, seed, decryptProgress, label) {
     }
   }
 
-  // Final revealed label overlay (when fully decrypted)
-  if (decryptProgress >= 1) {
-    ctx.font = "16px 'TR2N', sans-serif"
-    ctx.fillStyle = '#00FFFF'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, 120, 80)
-    // Reset alignment
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'alphabetic'
-  }
+  // Always show label — faint in idle, bright when decrypted
+  const labelAlpha = 0.35 + decryptProgress * 0.65
+  ctx.font = decryptProgress >= 1 ? "20px 'TR2N', sans-serif" : "14px 'TR2N', sans-serif"
+  ctx.fillStyle = `rgba(0,255,255,${labelAlpha})`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(label, 120, 80)
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
 }
 
 const GatewayPane = forwardRef(function GatewayPane({ position, label, seed }, ref) {
@@ -231,15 +212,13 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed }, r
           }}
         >
           <planeGeometry args={[5, 3.5]} />
-          <meshStandardMaterial
+          <meshBasicMaterial
             map={texture}
-            color="#00FFFF"
-            emissive="#00FFFF"
-            emissiveIntensity={0.04}
             transparent
-            opacity={0.18}
+            opacity={0.82}
             side={THREE.DoubleSide}
             toneMapped={false}
+            depthWrite={false}
           />
         </mesh>
         <lineSegments geometry={edgesGeo}>
