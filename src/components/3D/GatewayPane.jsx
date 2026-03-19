@@ -81,15 +81,19 @@ function drawFrame(ctx, seed, decryptProgress, label) {
     }
   }
 
-  // Always show label — faint in idle, bright when decrypted
-  const labelAlpha = 0.35 + decryptProgress * 0.65
-  ctx.font = decryptProgress >= 1 ? "20px 'TR2N', sans-serif" : "14px 'TR2N', sans-serif"
-  ctx.fillStyle = `rgba(0,255,255,${labelAlpha})`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(label, 120, 80)
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'alphabetic'
+  // Idle-only faint label: shown only when decryptProgress is zero so the
+  // pane is always identifiable at rest. Once a hover begins the cell-loop
+  // above takes over and renders the label as part of the reveal animation,
+  // so this block must not run in parallel with that path.
+  if (decryptProgress === 0) {
+    ctx.font = "14px 'TR2N', sans-serif"
+    ctx.fillStyle = 'rgba(0,255,255,0.35)'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(label, 120, 80)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
+  }
 }
 
 const GatewayPane = forwardRef(function GatewayPane({ position, label, seed }, ref) {
