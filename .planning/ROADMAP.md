@@ -60,11 +60,11 @@ Plans:
   3. All three panes continuously face the camera regardless of orbit position
   4. In idle state, each pane surface displays chaotic 2D wireframe art and hex/ASCII text streams
   5. Hovering a pane causes its wireframe to snap to a clean structure, text decrypts to the pane label, and a light pulse ripples outward across the grid floor from its base
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Gateway panes — geometry, billboard behavior, idle surface texture (GRID-01/02/03/04)
-- [ ] 03-02: Pane hover states, grid light pulse, performance validation (GRID-05, NFR-03)
+- [ ] 03-01-PLAN.md — Gateway panes geometry, OrbitControls, billboard behavior, idle surface texture (GRID-01, GRID-02, GRID-03, GRID-04)
+- [ ] 03-02-PLAN.md — Pane hover decrypt animation, grid light pulse, performance validation (GRID-05, NFR-03)
 
 ### Phase 4: Sector Dives + Finish
 **Goal**: All three content sectors are fully navigable and populated — Projects shows 3D monoliths, About shows the terminal bio, Skills shows the interactive network graph; the portfolio is deployable with correct SEO, favicon, and graceful mobile experience
