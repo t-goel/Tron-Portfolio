@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "duplicate-pane-text-overlap — Two overlapping text labels appear on the gateway panes"
 created: 2026-03-18T00:00:00Z
 updated: 2026-03-18T00:00:00Z

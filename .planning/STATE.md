@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-grid-world-02-PLAN.md (awaiting Task 2 visual checkpoint)
-last_updated: "2026-03-19T04:10:17.701Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-19T18:29:01.350Z"
 last_activity: "2026-03-19 - Completed quick task 260318-qle: Update spec and planning files: identity disc removed, Enter the Grid button replaces it"
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 4
+  total_plans: 13
+  completed_plans: 13
   percent: 0
 ---
 
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-17)
+See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** The portfolio IS the proof of skill — a recruiter should be wowed by the technical execution
-**Current focus:** Phase 1 — Boot + Disc Foundation
+**Current focus:** Planning next milestone (v1.1)
 
 ## Current Position
 
@@ -58,6 +58,10 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-shatter-dock P02 | 5 | 1 tasks | 2 files |
 | Phase 03-grid-world P01 | 5 | 2 tasks | 4 files |
 | Phase 03-grid-world P02 | 2 | 1 tasks | 1 files |
+| Phase 04-sector-dives-finish P01 | 3 | 2 tasks | 8 files |
+| Phase 04-sector-dives-finish P02 | 2 | 2 tasks | 2 files |
+| Phase 04-sector-dives-finish P03 | 2 | 2 tasks | 2 files |
+| Phase 04-sector-dives-finish P04 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -85,6 +89,15 @@ Recent decisions affecting current work:
 - [Phase 03-grid-world]: forwardRef on GatewayPane — required for GatewayPanes to animate Three.js position.y via GSAP
 - [Phase 03-grid-world]: unified drawFrame replaces drawIdleFrame - single function handles 0-1 decrypt progress spectrum
 - [Phase 03-grid-world]: fragment wrapper on GatewayPane return - ring mesh outside billboard group to stay flat on grid floor
+- [Phase 04-sector-dives-finish]: CameraController unmounts OrbitControls during sector view via activeSector guard — avoids control/GSAP tween conflicts
+- [Phase 04-sector-dives-finish]: ProjectsSector outer container pointerEvents:none enables Monolith hover pass-through to canvas; inner wrapper re-enables auto for cards
+- [Phase 04-sector-dives-finish]: transitioning flag in Zustand prevents double-fire on rapid pane clicks during GSAP camera lerp
+- [Phase 04-sector-dives-finish]: AboutSector: TBD contact fields show '[not set]' instead of broken links; off-white output vs cyan commands for hierarchy
+- [Phase 04-sector-dives-finish]: SkillsSector uses refs for all animation state — no React state for rAF animation progress, preventing render thrash
+- [Phase 04-sector-dives-finish]: Collapse hides Tier 2 nodes immediately then animates reverse racers for cleaner visual
+- [Phase 04-sector-dives-finish]: useMobile hook uses matchMedia addEventListener — reactive breakpoint without polling
+- [Phase 04-sector-dives-finish]: MobileGateway at zIndex 25 replaces 3D panes; GatewayPanes/OrbitControls unmounted on mobile
+- [Phase 04-sector-dives-finish]: Favicon deferred to document.fonts.ready for TR2N font availability before canvas fillText
 
 ### Pending Todos
 
@@ -105,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T04:10:17.697Z
-Stopped at: Completed 03-grid-world-02-PLAN.md (awaiting Task 2 visual checkpoint)
+Last session: 2026-03-19T05:18:32.475Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None

@@ -16,6 +16,10 @@ const useAppState = create((set) => ({
   // Active sector (null, 'about', 'skills', 'projects')
   activeSector: null,
   setActiveSector: (sector) => set({ activeSector: sector }),
+
+  // Camera transition flag — prevents double-fire during GSAP lerp
+  transitioning: false,
+  setTransitioning: (v) => set({ transitioning: v }),
 }))
 
 export default useAppState

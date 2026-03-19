@@ -96,7 +96,7 @@ function drawFrame(ctx, seed, decryptProgress, label) {
   }
 }
 
-const GatewayPane = forwardRef(function GatewayPane({ position, label, seed }, ref) {
+const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onPaneClick }, ref) {
   const groupRef = useRef()
   const lastDrawRef = useRef(0)
   const { camera } = useThree()
@@ -213,6 +213,10 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed }, r
             e.stopPropagation()
             decryptRef.current.direction = -1
             document.body.style.cursor = 'auto'
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            if (onPaneClick) onPaneClick()
           }}
         >
           <planeGeometry args={[5, 3.5]} />

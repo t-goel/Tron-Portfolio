@@ -7,12 +7,37 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="Tanmay Goel — Software Developer" />
-    <meta property="og:description" content="CS at UIUC. Building at the intersection of Computer Science, Economics, and AI." />
+    <meta property="og:description" content="Tanmay Goel — CS at UIUC. Full-stack and ML engineer. Interactive 3D portfolio." />
     <meta property="og:type" content="website" />
+    <meta name="description" content="Tanmay Goel — CS at UIUC. Full-stack and ML engineer. Interactive 3D portfolio." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tanmay Goel — Software Developer" />
+    <meta name="twitter:image" content="/og-image.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+    <script>
+      document.fonts.ready.then(function() {
+        var c = document.createElement('canvas');
+        c.width = 32; c.height = 32;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#FF0000';
+        ctx.font = "bold 24px 'TR2N', Arial Black, sans-serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('T', 16, 17);
+        var link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.href = c.toDataURL('image/png');
+        document.head.appendChild(link);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
