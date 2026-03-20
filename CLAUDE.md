@@ -3,8 +3,6 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 
-## NOTE
-Remind me if I dont mention this. I want to prioritize speed and ease of access to projects. Maybe make the projects a normal webpage/browser scroll.
 
 ## Project Overview
 
