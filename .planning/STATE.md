@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Immersion Polish
 status: executing
-stopped_at: Completed 05-01-PLAN.md (all 3 tasks done, human-verify approved)
-last_updated: "2026-03-19T23:56:56.207Z"
+stopped_at: Completed 06-01-PLAN.md — dark terminal boot sequence
+last_updated: "2026-03-20T21:17:34.054Z"
 last_activity: 2026-03-19 — 05-01 quick-win UX polish complete; PANE-01, TITLE-01, NAV-04 all verified
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 10
 ---
 
@@ -51,6 +51,8 @@ Progress: [█░░░░░░░░░] ~10%
 
 *Updated after each plan completion*
 | Phase 05-quick-wins P01 | 8 | 2 tasks | 3 files |
+| Phase 06-first-impressions P01 | 10 | 2 tasks | 2 files |
+| Phase 06-first-impressions P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +68,10 @@ Recent decisions affecting v1.1 work:
 - [v1.1 planning]: R3F canvas steals focus from DOM inputs — terminal input needs onBlur={() => inputRef.current?.focus()} to reclaim it
 - [Phase 05-quick-wins]: ESC handler placed in App.jsx (not inside sector components) so a single listener covers all three sectors
 - [Phase 05-quick-wins]: Used useAppState.getState() for ESC keydown handler to avoid stale closure — consistent with existing HUD onClick pattern
+- [Phase 06-first-impressions]: Replaced 5.8s white shard animation with 3s dark terminal log — faster and on-brand from first frame
+- [Phase 06-first-impressions]: setPhase(2) preserved at T+800ms to keep TitleOverlay rendering contract
+- [Phase 06-first-impressions]: Mount hint with hudVisible && !activeSector so it appears only after OrbitControls are active
+- [Phase 06-first-impressions]: Use sessionStorage (not localStorage) for hint gate so it reappears after tab close per PANE-02 spec
 
 ### Pending Todos
 
@@ -78,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T23:55:00.000Z
-Stopped at: Completed 05-01-PLAN.md (all 3 tasks done, human-verify approved)
+Last session: 2026-03-20T21:14:15.318Z
+Stopped at: Completed 06-01-PLAN.md — dark terminal boot sequence
 Resume file: None

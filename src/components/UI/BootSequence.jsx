@@ -1,330 +1,91 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import useAppState from '../../store/appState'
+import { useState, useEffect, useRef } from 'react'
 import { playWithFade, initAudio } from '../../utils/audioManager'
+import useAppState from '../../store/appState'
 
-const CENTER_RADIUS = 10
-
-function expandPoly(verts, amount) {
-  const cx = verts.reduce((s, v) => s + v.x, 0) / verts.length
-  const cy = verts.reduce((s, v) => s + v.y, 0) / verts.length
-  return verts.map((v) => {
-    const dx = v.x - cx
-    const dy = v.y - cy
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    if (dist === 0) return v
-    return { x: v.x + (dx / dist) * amount, y: v.y + (dy / dist) * amount }
-  })
-}
-
-function generateShards() {
-  const shards = []
-  let id = 0
-
-  const cols = 7
-  const rows = 7
-  const cellW = 100 / cols
-  const cellH = 100 / rows
-
-  const points = []
-  for (let r = 0; r <= rows; r++) {
-    points[r] = []
-    for (let c = 0; c <= cols; c++) {
-      const isEdge = r === 0 || r === rows || c === 0 || c === cols
-      const jitterX = isEdge ? 0 : (Math.random() - 0.5) * cellW * 0.5
-      const jitterY = isEdge ? 0 : (Math.random() - 0.5) * cellH * 0.5
-      points[r][c] = {
-        x: c * cellW + jitterX,
-        y: r * cellH + jitterY,
-      }
-    }
-  }
-
-  const screenCenterX = 50
-  const screenCenterY = 50
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const tl = points[r][c]
-      const tr = points[r][c + 1]
-      const br = points[r + 1][c + 1]
-      const bl = points[r + 1][c]
-
-      const midX = (tl.x + tr.x + br.x + bl.x) / 4
-      const midY = (tl.y + tr.y + br.y + bl.y) / 4
-
-      const distFromCenter = Math.sqrt(
-        Math.pow(midX - screenCenterX, 2) + Math.pow(midY - screenCenterY, 2)
-      )
-
-      const isCenter = distFromCenter < CENTER_RADIUS
-
-      const expanded = expandPoly([tl, tr, br, bl], 0)
-      const clipPath = `polygon(${expanded.map((v) => `${v.x}% ${v.y}%`).join(', ')})`
-
-      const angle = Math.atan2(midY - screenCenterY, midX - screenCenterX)
-      const fallDistance = 120 + Math.random() * 80
-
-      const maxDist = 70
-      const normalizedDist = Math.min(distFromCenter / maxDist, 1)
-      const delay = (1 - normalizedDist) * 0.8 + Math.random() * 0.2
-
-      shards.push({
-        id: id++,
-        clipPath,
-        vertices: [tl, tr, br, bl],
-        midX,
-        midY,
-        rotation: (Math.random() - 0.5) * 30,
-        delay,
-        fallX: Math.cos(angle) * fallDistance,
-        fallY: Math.sin(angle) * fallDistance + 50,
-        isCenter,
-      })
-    }
-  }
-
-  return shards
-}
-
-function convexHull(pts) {
-  const unique = [
-    ...new Map(
-      pts.map((p) => [`${p.x.toFixed(4)},${p.y.toFixed(4)}`, p])
-    ).values(),
-  ]
-  if (unique.length < 3) return unique
-
-  unique.sort((a, b) => a.x - b.x || a.y - b.y)
-
-  const cross = (O, A, B) =>
-    (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x)
-
-  const lower = []
-  for (const p of unique) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
-      lower.pop()
-    lower.push(p)
-  }
-
-  const upper = []
-  for (let i = unique.length - 1; i >= 0; i--) {
-    const p = unique[i]
-    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0)
-      upper.pop()
-    upper.push(p)
-  }
-
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)]
-}
+const BOOT_LINES = [
+  'GRID OS v7.2.1 — INITIALIZING...',
+  'Loading kernel modules...',
+  'Mounting /dev/grid0 ... [OK]',
+  'Calibrating light cycle array...',
+  'Authenticating user identity...',
+  'Neural bridge established.',
+  'Welcome to the Grid.',
+]
 
 export default function BootSequence({ onComplete }) {
   const setPhase = useAppState((s) => s.setPhase)
-  const [phase, setAnimPhase] = useState('idle')
-  const [shards, setShards] = useState([])
-  const hasInitialized = useRef(false)
-
-  const startAnimation = useCallback(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
-    setShards(generateShards())
-
-    const sound = initAudio()
-    if (sound) {
-      sound.on('playerror', () => {
-        document.addEventListener('click', () => playWithFade(2000), { once: true })
-      })
-    }
-
-    setTimeout(() => setAnimPhase('cracking'), 400)
-    setTimeout(() => {
-      setAnimPhase('falling')
-      setPhase(2)
-      playWithFade(2000)
-    }, 1200)
-    setTimeout(() => setAnimPhase('pivot'), 2400)
-    setTimeout(() => setAnimPhase('drop'), 4800)
-    setTimeout(() => {
-      setAnimPhase('done')
-      if (onComplete) onComplete()
-    }, 5800)
-  }, [onComplete, setPhase])
+  const [fadingOut, setFadingOut] = useState(false)
+  const audioInitialized = useRef(false)
 
   useEffect(() => {
-    startAnimation()
-  }, [startAnimation])
+    if (!audioInitialized.current) {
+      audioInitialized.current = true
+      const sound = initAudio()
+      if (sound) {
+        sound.on('playerror', () => {
+          document.addEventListener('click', () => playWithFade(2000), { once: true })
+        })
+      }
+    }
 
-  const outerShards = useMemo(() => shards.filter((s) => !s.isCenter), [shards])
-  const centerShards = useMemo(() => shards.filter((s) => s.isCenter), [shards])
+    const t1 = setTimeout(() => {
+      playWithFade(2000)
+      setPhase(2)
+    }, 800)
 
-  const pivot = useMemo(() => {
-    if (centerShards.length === 0) return { x: 50, y: 50 }
-    const tr = centerShards[0].vertices[1]
-    return { x: tr.x, y: tr.y }
-  }, [centerShards])
+    const t2 = setTimeout(() => setFadingOut(true), 2500)
 
-  const centerClip = useMemo(() => {
-    if (centerShards.length === 0) return 'none'
-    const allVerts = centerShards.flatMap((s) => s.vertices)
-    const hull = convexHull(allVerts)
-    const expanded = expandPoly(hull, 1.5)
-    return `polygon(${expanded.map((v) => `${v.x}% ${v.y}%`).join(', ')})`
-  }, [centerShards])
+    const t3 = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 3000)
 
-  if (phase === 'done') return null
-
-  const showCenterPiece = phase === 'falling' || phase === 'pivot' || phase === 'drop'
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+    }
+  }, [onComplete, setPhase])
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
-      {/* Crack lines SVG overlay */}
-      {(phase === 'cracking' || phase === 'falling') && (
-        <svg
-          className="absolute inset-0 w-full h-full z-10"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          style={{
-            opacity: phase === 'falling' ? 0 : 1,
-            transition: 'opacity 0.3s ease',
-          }}
-        >
-          <CrackLines />
-        </svg>
-      )}
-
-      {/* Outer shards - fall away from center */}
-      {outerShards.map((shard) => (
-        <div
-          key={shard.id}
-          className="absolute inset-0 z-20"
-          style={{
-            clipPath: shard.clipPath,
-            transform:
-              phase === 'falling' || phase === 'pivot' || phase === 'drop'
-                ? `translate(${shard.fallX}px, ${shard.fallY}px) rotate(${shard.rotation}deg)`
-                : 'translate(0, 0) rotate(0deg)',
-            opacity:
-              phase === 'falling' || phase === 'pivot' || phase === 'drop' ? 0 : 1,
-            transition: `transform ${0.8 + Math.random() * 0.4}s cubic-bezier(0.55, 0.06, 0.68, 0.19) ${shard.delay}s, opacity 0.6s ease ${shard.delay + 0.3}s`,
-            willChange: 'transform, opacity',
-          }}
-        >
-          <div className="w-full h-full bg-[#fafafa]" />
-        </div>
-      ))}
-
-      {/* Center piece - composed of actual grid cells so edges align perfectly.
-          Pivots like a loose picture frame, then drops. */}
+    <div
+      className="fixed inset-0 z-50"
+      style={{
+        background: '#000',
+        opacity: fadingOut ? 0 : 1,
+        transition: 'opacity 0.5s ease',
+      }}
+      aria-hidden="true"
+    >
       <div
-        className="absolute inset-0 z-30"
         style={{
-          transformOrigin: `${pivot.x}% ${pivot.y}%`,
-          animation: showCenterPiece
-            ? phase === 'drop'
-              ? 'pivotDrop 0.9s cubic-bezier(0.6, 0, 1, 0.4) forwards'
-              : phase === 'pivot'
-                ? 'pivotSwing 2.2s ease-in-out forwards'
-                : 'none'
-            : 'none',
-          willChange: 'transform, opacity',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          padding: '0 16px',
+          maxWidth: '480px',
+          width: '100%',
         }}
       >
-        {/* Individual center cells with grid-aligned clip paths */}
-        {centerShards.map((shard) => (
+        {BOOT_LINES.map((line, i) => (
           <div
-            key={shard.id}
-            className="absolute inset-0"
-            style={{ clipPath: shard.clipPath }}
+            key={i}
+            style={{
+              opacity: 0,
+              animation: 'bootLineIn 0.3s ease forwards',
+              animationDelay: `${i * 0.25}s`,
+              fontFamily: "'Roboto Mono', monospace",
+              color: '#00FFFF',
+              fontSize: '0.75rem',
+              lineHeight: '1.8',
+              letterSpacing: '0.05em',
+              textShadow: '0 0 6px #00FFFF',
+            }}
           >
-            <div className="w-full h-full bg-[#fafafa]" />
+            {line}
           </div>
         ))}
-
-        {/* Loading indicator, clipped to center area */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ clipPath: centerClip }}
-        >
-          <div className="flex flex-col items-center gap-1.5 sm:gap-3 scale-75 sm:scale-100">
-            <div className="flex gap-1 sm:gap-1.5">
-              <span
-                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
-                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0s' }}
-              />
-              <span
-                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
-                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0.2s' }}
-              />
-              <span
-                className="block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#0a0a0a]"
-                style={{ animation: 'loadDot 1.4s ease-in-out infinite', animationDelay: '0.4s' }}
-              />
-            </div>
-            <span className="text-xs sm:text-sm font-mono tracking-[0.15em] sm:tracking-[0.3em] uppercase text-[#0a0a0a]">
-              Loading
-            </span>
-          </div>
-        </div>
       </div>
-
-      {/* Full white base layer */}
-      {(phase === 'idle' || phase === 'cracking') ? (
-        <div className="absolute inset-0 z-0 bg-[#fafafa]" />
-      ) : null}
     </div>
-  )
-}
-
-function CrackLines() {
-  const lines = []
-
-  const numCracks = 8
-  for (let i = 0; i < numCracks; i++) {
-    const angle = (i / numCracks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3
-    const length = 40 + Math.random() * 20
-    const segments = 3 + Math.floor(Math.random() * 3)
-    let path = `M 50 50`
-    let curX = 50
-    let curY = 50
-
-    for (let s = 1; s <= segments; s++) {
-      const segLen = length / segments
-      const jitter = (Math.random() - 0.5) * 8
-      curX += Math.cos(angle + jitter * 0.05) * segLen
-      curY += Math.sin(angle + jitter * 0.05) * segLen
-      path += ` L ${curX} ${curY}`
-    }
-
-    lines.push({ d: path, delay: i * 0.05 })
-
-    if (Math.random() > 0.3) {
-      const branchStart = 0.3 + Math.random() * 0.4
-      const bx = 50 + Math.cos(angle) * length * branchStart
-      const by = 50 + Math.sin(angle) * length * branchStart
-      const branchAngle = angle + (Math.random() - 0.5) * 1.2
-      const branchLen = 10 + Math.random() * 15
-      const bex = bx + Math.cos(branchAngle) * branchLen
-      const bey = by + Math.sin(branchAngle) * branchLen
-      lines.push({ d: `M ${bx} ${by} L ${bex} ${bey}`, delay: i * 0.05 + 0.15 })
-    }
-  }
-
-  return (
-    <>
-      {lines.map((line, i) => (
-        <path
-          key={i}
-          d={line.d}
-          fill="none"
-          stroke="#d4d4d4"
-          strokeWidth="0.3"
-          vectorEffect="non-scaling-stroke"
-          style={{
-            strokeDasharray: 1000,
-            strokeDashoffset: 1000,
-            animation: `crackDraw 0.4s ease-out ${line.delay}s forwards`,
-          }}
-        />
-      ))}
-    </>
   )
 }

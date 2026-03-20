@@ -8,13 +8,13 @@
 
 ### Boot & Title
 
-- [ ] **BOOT-05**: User sees a dark Tron-themed terminal boot log (scrolling monospace system text on void black background) as the loading screen instead of a white/light screen
+- [x] **BOOT-05**: User sees a dark Tron-themed terminal boot log (scrolling monospace system text on void black background) as the loading screen instead of a white/light screen
 - [x] **TITLE-01**: Title screen text clears promptly and smoothly when the user clicks the CTA button (no lingering overlap during transition)
 
 ### Grid UX
 
 - [x] **PANE-01**: Gateway pane labels ("SKILLS", "PROJECTS", "ABOUT ME") are legible by default without requiring hover interaction
-- [ ] **PANE-02**: User sees a brief navigation affordance hint ("Click and drag to explore") the first time they enter the grid (sessionStorage-gated, one-time display)
+- [x] **PANE-02**: User sees a brief navigation affordance hint ("Click and drag to explore") the first time they enter the grid (sessionStorage-gated, one-time display)
 
 ### Navigation
 
@@ -61,8 +61,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TITLE-01 | Phase 5 | Complete |
 | PANE-01 | Phase 5 | Complete |
 | NAV-04 | Phase 5 | Complete |
-| PANE-02 | Phase 6 | Pending |
-| BOOT-05 | Phase 6 | Pending |
+| PANE-02 | Phase 6 | Complete |
+| BOOT-05 | Phase 6 | Complete |
 | NAV-03 | Phase 7 | Pending |
 | NAV-05 | Phase 7 | Pending |
 | ABOUT-05 | Phase 8 | Pending |

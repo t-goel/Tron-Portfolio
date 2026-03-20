@@ -11,6 +11,7 @@ import ProjectsSector from './components/UI/ProjectsSector'
 import AboutSector from './components/UI/AboutSector'
 import SkillsSector from './components/UI/SkillsSector'
 import MobileGateway from './components/UI/MobileGateway'
+import GridAffordanceHint from './components/UI/GridAffordanceHint'
 import useAppState from './store/appState'
 import { setMuted } from './utils/audioManager'
 import { detectWebGL } from './utils/webglDetect'
@@ -96,6 +97,7 @@ function App() {
       {activeSector === 'about' && <AboutSector />}
       {activeSector === 'skills' && <SkillsSector />}
       {isMobile && phase >= 3 && hudVisible && !activeSector && <MobileGateway />}
+      {hudVisible && !activeSector && <GridAffordanceHint />}
 
       {!showBoot && phase >= 2 && (
         <TitleOverlay visible={phase === 2} glitch={titleGlitch}>

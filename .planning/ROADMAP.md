@@ -24,7 +24,7 @@ Full archive: `.planning/milestones/v1.0-ROADMAP.md`
 **Milestone Goal:** Deepen UX immersion through a Tron-themed loading screen, visible panel labels, navigation affordances, cinematic sector exit, and interactive terminal.
 
 - [x] **Phase 5: Quick Wins** — Zero-dependency polish: visible pane labels, faster title clear, ESC exits sectors (completed 2026-03-19)
-- [ ] **Phase 6: First Impressions** — New isolated components: Tron terminal boot screen, navigation affordance hint
+- [x] **Phase 6: First Impressions** — New isolated components: Tron terminal boot screen, navigation affordance hint (completed 2026-03-20)
 - [ ] **Phase 7: Camera Warp** — Cinematic hyper-reverse warp animation on sector exit; verify disc-click return
 - [ ] **Phase 8: Interactive Terminal** — About terminal accepts typed input; "exit" command triggers full warp exit
 
@@ -49,7 +49,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. The loading screen shows a dark void-black background with scrolling monospace boot log text in cyan — no white flash or light background visible
   2. A first-time grid visitor sees a "Click and drag to explore" affordance hint that auto-fades; it does not reappear on subsequent visits to the grid in the same session
-**Plans**: TBD
+**Plans:** 2/2 plans complete
+Plans:
+- [ ] 06-01-PLAN.md — Dark terminal boot log (BOOT-05)
+- [ ] 06-02-PLAN.md — Grid affordance hint overlay (PANE-02)
 
 ### Phase 7: Camera Warp
 **Goal**: Exiting a sector feels cinematic — the camera accelerates backward through the grid and snaps back into the orbital view
@@ -80,6 +83,6 @@ Plans:
 | 3. Grid World | v1.0 | 2/2 | Complete | 2026-03-19 |
 | 4. Sector Dives + Finish | v1.0 | 5/5 | Complete | 2026-03-19 |
 | 5. Quick Wins | 1/1 | Complete   | 2026-03-19 | - |
-| 6. First Impressions | v1.1 | 0/TBD | Not started | - |
+| 6. First Impressions | 2/2 | Complete   | 2026-03-20 | - |
 | 7. Camera Warp | v1.1 | 0/TBD | Not started | - |
 | 8. Interactive Terminal | v1.1 | 0/TBD | Not started | - |
