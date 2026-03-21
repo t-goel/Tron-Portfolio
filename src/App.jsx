@@ -112,21 +112,28 @@ function App() {
         </button>
       )}
 
-      {/* HUD controls: mute toggle + social icons at bottom-right */}
+      {/* HUD controls: mute toggle bottom-left, social icons bottom-right */}
+      {hudVisible && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '24px',
+            zIndex: 20,
+          }}
+        >
+          <MuteToggle />
+        </div>
+      )}
       {hudVisible && (
         <div
           style={{
             position: 'fixed',
             bottom: '24px',
             right: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px',
             zIndex: 20,
           }}
         >
-          <MuteToggle />
           <SocialIcons />
         </div>
       )}
