@@ -5,8 +5,9 @@ import gsap from 'gsap'
 import useAppState from '../../store/appState'
 
 // Module-level flag: cinematic plays once per page load.
-// If the user navigates home (setPhase(2)) after seeing it,
-// this component mounts again and immediately calls setPhase(3).
+// Guards against two remount scenarios:
+// 1. Home-button back-navigation: user clicks HUD home → setPhase(2) → remount → skip
+// 2. React Fast Refresh: component-only HMR updates remount without re-evaluating module
 let hasPlayed = false
 
 export default function CinematicIntro() {
@@ -17,7 +18,7 @@ export default function CinematicIntro() {
     // Skip cinematic on repeat mount (home-button back-navigation)
     if (hasPlayed) {
       setPhase(3)
-      return
+      return () => {}  // no tweens created, nothing to clean up
     }
 
     const mountedRef = { current: true }
@@ -26,7 +27,8 @@ export default function CinematicIntro() {
     camera.position.set(0, 3, -34)
     camera.lookAt(0, 3, -40)
 
-    // Proxy object for interpolating lookAt target
+    // CameraController (and its OrbitControls) only mounts at phase >= 3,
+    // so no other code will touch camera.quaternion during this component's lifetime.
     const lookAtProxy = { x: 0, y: 3, z: -40 }
 
     const positionTween = gsap.to(camera.position, {
@@ -37,8 +39,8 @@ export default function CinematicIntro() {
       onUpdate: () => camera.lookAt(lookAtProxy.x, lookAtProxy.y, lookAtProxy.z),
       onComplete: () => {
         if (mountedRef.current) {
-          hasPlayed = true
           setPhase(3)
+          hasPlayed = true
         }
       },
     })
