@@ -23,16 +23,13 @@ function App() {
   const phase = useAppState((s) => s.phase)
   const hudVisible = useAppState((s) => s.hudVisible)
   const setHudVisible = useAppState((s) => s.setHudVisible)
-const activeSector = useAppState((s) => s.activeSector)
+  const activeSector = useAppState((s) => s.activeSector)
+  const audioEnabled = useAppState((s) => s.audioEnabled)
 
-  // Subscribe to audioEnabled changes — sync with Howler mute
+  // Sync audioEnabled → Howler mute
   useEffect(() => {
-    const unsub = useAppState.subscribe(
-      (s) => s.audioEnabled,
-      (enabled) => setMuted(!enabled)
-    )
-    return unsub
-  }, [])
+    setMuted(!audioEnabled)
+  }, [audioEnabled])
 
   // NAV-04: ESC exits any active sector back to grid
   useEffect(() => {
