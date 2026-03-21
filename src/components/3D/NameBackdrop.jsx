@@ -1,6 +1,7 @@
 // src/components/3D/NameBackdrop.jsx
 import { Text } from '@react-three/drei'
 import fontUrl from '../../assets/fonts/Tron-JOAa.ttf'
+import { contact } from '../../data/contact'
 
 export default function NameBackdrop() {
   return (
@@ -13,7 +14,7 @@ export default function NameBackdrop() {
         anchorX="center"
         anchorY="middle"
       >
-        TANMAY GOEL
+        {contact.name}
       </Text>
       <Text
         position={[0, 1.5, -40]}
@@ -22,7 +23,7 @@ export default function NameBackdrop() {
         anchorX="center"
         anchorY="middle"
       >
-        SOFTWARE DEVELOPER
+        {contact.title}
       </Text>
     </>
   )
