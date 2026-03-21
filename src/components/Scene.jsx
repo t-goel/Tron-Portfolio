@@ -1,3 +1,4 @@
+// src/components/Scene.jsx
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import { OrbitControls } from '@react-three/drei'
 import useAppState from '../store/appState'
@@ -5,10 +6,12 @@ import GridFloor from './3D/GridFloor'
 import GatewayPanes from './3D/GatewayPanes'
 import CameraController from './3D/CameraController'
 import Monolith from './3D/Monolith'
+import NameBackdrop from './3D/NameBackdrop'
+import CinematicIntro from './3D/CinematicIntro'
 import { projects } from '../data/projects'
 import { useMobile } from '../hooks/useMobile'
 
-export default function Scene() {
+export default function Scene({ mainVisible }) {
   const phase = useAppState((s) => s.phase)
   const activeSector = useAppState((s) => s.activeSector)
   const isMobile = useMobile()
@@ -19,6 +22,9 @@ export default function Scene() {
       <ambientLight intensity={0.2} />
       <pointLight position={[0, 3, 5]} intensity={1.5} color="#ffffff" />
       <pointLight position={[0, -3, -5]} intensity={0.5} color="#FF0000" />
+
+      {phase >= 2 && <NameBackdrop />}
+      {phase === 2 && mainVisible && <CinematicIntro />}
 
       {phase >= 3 && <CameraController />}
       {phase >= 3 && <GridFloor />}
