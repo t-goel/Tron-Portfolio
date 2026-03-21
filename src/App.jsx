@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
-import gsap from 'gsap'
 import Scene from './components/Scene'
 import BootSequence from './components/UI/BootSequence'
 import SocialIcons from './components/UI/SocialIcons'
@@ -15,7 +14,6 @@ import { setMuted } from './utils/audioManager'
 import { detectWebGL } from './utils/webglDetect'
 import WebGLFallback from './components/WebGLFallback'
 import { useMobile } from './hooks/useMobile'
-import { contact } from './data/contact'
 
 function App() {
   const webglAvailable = useMemo(() => detectWebGL(), [])
@@ -25,9 +23,7 @@ function App() {
   const phase = useAppState((s) => s.phase)
   const hudVisible = useAppState((s) => s.hudVisible)
   const setHudVisible = useAppState((s) => s.setHudVisible)
-  const setPhase = useAppState((s) => s.setPhase)
-  const activeSector = useAppState((s) => s.activeSector)
-  const domDiscRef = useRef(null)
+const activeSector = useAppState((s) => s.activeSector)
 
   // Subscribe to audioEnabled changes — sync with Howler mute
   useEffect(() => {
@@ -49,23 +45,11 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // GSAP dock animation: fires when phase transitions to 3
+  // Show HUD when phase transitions to 3
   useEffect(() => {
-    if (phase !== 3 || !domDiscRef.current) return
-    const tween = gsap.to(domDiscRef.current, {
-      top: '24px',
-      left: '24px',
-      xPercent: 0,
-      yPercent: 0,
-      scale: 0.35,
-      duration: 1.2,
-      ease: 'power2.inOut',
-      delay: 0.05,
-      onComplete: () => {
-        setHudVisible(true)
-      },
-    })
-    return () => tween.kill()
+    if (phase !== 3) return
+    const timer = setTimeout(() => setHudVisible(true), 400)
+    return () => clearTimeout(timer)
   }, [phase, setHudVisible])
 
   function handleBootComplete() {
@@ -97,60 +81,38 @@ function App() {
       {isMobile && phase >= 3 && hudVisible && !activeSector && <MobileGateway />}
       {hudVisible && !activeSector && <GridAffordanceHint />}
 
-      {/* DOM disc: visible during dock animation (phase 3 before HUD appears) */}
-      {phase >= 3 && !hudVisible && (
-        <div
-          ref={domDiscRef}
-          style={{
-            position: 'fixed',
-            top: 'calc(50vh - 60px)',
-            left: 'calc(50vw - 60px)',
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            border: '3px solid var(--crimson-red)',
-            boxShadow: '0 0 15px var(--crimson-red), 0 0 40px rgba(255,0,0,0.4)',
-            zIndex: 15,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {/* HUD home button: spinning disc + name at top-left */}
-      {hudVisible && (
-        <div
+      {/* HUD home button: icon-only, top-left, only visible inside a sector */}
+      {hudVisible && activeSector && (
+        <button
+          aria-label="Return to grid"
+          onClick={() => useAppState.getState().setActiveSector(null)}
           style={{
             position: 'fixed',
             top: '24px',
             left: '24px',
+            background: 'transparent',
+            border: '1px solid #00FFFF',
+            borderRadius: '50%',
+            width: '44px',
+            height: '44px',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            zIndex: 20,
-            cursor: 'pointer',
+            justifyContent: 'center',
+            boxShadow: '0 0 8px #00FFFF',
+            color: '#00FFFF',
+            padding: 0,
+            transition: 'box-shadow 0.2s ease',
+            zIndex: 40,
           }}
-          onClick={() => {
-            if (useAppState.getState().activeSector) {
-              useAppState.getState().setActiveSector(null)
-            } else {
-              setPhase(2)
-              setHudVisible(false)
-            }
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 14px #00FFFF' }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 8px #00FFFF' }}
         >
-          <div className="hud-disc" />
-          <span
-            style={{
-              fontFamily: "'TR2N', sans-serif",
-              color: 'var(--crimson-red)',
-              fontSize: '0.9rem',
-              letterSpacing: '0.3em',
-              pointerEvents: 'none',
-            }}
-          >
-            {contact.name}
-          </span>
-        </div>
+          {/* House icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="20" height="20">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+          </svg>
+        </button>
       )}
 
       {/* HUD controls: mute toggle + social icons at bottom-right */}
