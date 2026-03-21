@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { contact } from '../../data/contact'
+import useAppState from '../../store/appState'
+
+const PROMPT = 'tanmay@grid:~$ '
 
 const TERMINAL_SEQUENCE = [
-  { cmd: '$ whoami', output: 'tanmay-goel' },
-  { cmd: '$ cat background.txt', output: 'CS at UIUC (Class of 2027). Building full-stack and ML systems since freshman year.' },
-  { cmd: '$ cat interests.txt', output: 'AI/ML research, distributed systems, immersive frontend engineering.' },
-  { cmd: '$ cat looking_for.txt', output: 'SWE/ML internship opportunities — Summer 2027. Open to research and systems roles.' },
-  { cmd: '$ ls contact/', output: 'github.txt  linkedin.txt  email.txt' },
-  { cmd: '$ cat contact/*', output: '__CONTACT_LINKS__' },
+  { cmd: `${PROMPT}whoami`, output: 'tanmay-goel' },
+  { cmd: `${PROMPT}cat background.txt`, output: 'CS at UIUC (Class of 2027). Building full-stack and ML systems since freshman year.' },
+  { cmd: `${PROMPT}cat interests.txt`, output: 'AI/ML research, distributed systems, immersive frontend engineering.' },
+  { cmd: `${PROMPT}cat looking_for.txt`, output: 'SWE/ML internship opportunities — Summer 2027. Open to research and systems roles.' },
+  { cmd: `${PROMPT}ls contact/`, output: 'github.txt  linkedin.txt  email.txt' },
+  { cmd: `${PROMPT}cat contact/*`, output: '__CONTACT_LINKS__' },
 ]
+
 
 export default function AboutSector() {
   const [visible, setVisible] = useState(false)
@@ -16,8 +20,10 @@ export default function AboutSector() {
   const [currentTyping, setCurrentTyping] = useState('')
   const [done, setDone] = useState(false)
   const [cursorVisible, setCursorVisible] = useState(true)
+  const [userInput, setUserInput] = useState('')
   const timeoutsRef = useRef([])
   const terminalBodyRef = useRef(null)
+  const setActiveSector = useAppState((s) => s.setActiveSector)
 
   // Fade in on mount
   useEffect(() => {
@@ -37,7 +43,7 @@ export default function AboutSector() {
     if (terminalBodyRef.current) {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight
     }
-  }, [lines, currentTyping])
+  }, [lines, currentTyping, userInput])
 
   // Typewriter engine
   useEffect(() => {
@@ -93,6 +99,43 @@ export default function AboutSector() {
       timeoutsRef.current.forEach(clearTimeout)
     }
   }, [])
+
+  // Keyboard handler for interactive mode
+  useEffect(() => {
+    if (!done) return
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter') {
+        const cmd = userInput.trim()
+        setUserInput('')
+
+        const cmdLine = { type: 'cmd', text: `${PROMPT}${cmd}` }
+
+        if (cmd === 'exit') {
+          setActiveSector(null)
+          return
+        }
+
+        if (!cmd) {
+          setLines((prev) => [...prev, cmdLine])
+          return
+        }
+
+        setLines((prev) => [
+          ...prev,
+          cmdLine,
+          { type: 'error', text: `bash: ${cmd}: command not found` },
+        ])
+      } else if (e.key === 'Backspace') {
+        setUserInput((v) => v.slice(0, -1))
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        setUserInput((v) => v + e.key)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [done, userInput, setActiveSector])
 
   function renderContactLink(href, label, isTBD) {
     if (isTBD) {
@@ -155,6 +198,18 @@ export default function AboutSector() {
     )
   }
 
+  function renderCmdLine(text, idx) {
+    const promptEnd = text.indexOf('$ ') + 2
+    const prompt = text.slice(0, promptEnd)
+    const command = text.slice(promptEnd)
+    return (
+      <div key={idx}>
+        <span style={{ color: '#28C840', letterSpacing: '0.05em' }}>{prompt}</span>
+        <span style={{ color: '#00FFFF', letterSpacing: '0.05em' }}>{command}</span>
+      </div>
+    )
+  }
+
   return (
     <div
       style={{
@@ -186,21 +241,37 @@ export default function AboutSector() {
           flexDirection: 'column',
         }}
       >
-        {/* Chrome bar */}
+        {/* Title bar */}
         <div
           style={{
             height: 28,
-            background: 'rgba(20,20,20,0.98)',
+            background: 'rgba(0,30,30,0.98)',
+            borderBottom: '1px solid rgba(0,255,255,0.2)',
             display: 'flex',
             alignItems: 'center',
-            paddingLeft: 16,
-            gap: 8,
+            justifyContent: 'center',
             flexShrink: 0,
+            position: 'relative',
           }}
         >
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF5F57' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FEBC2E' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28C840' }} />
+          <span style={{
+            fontFamily: "'Roboto Mono', monospace",
+            fontSize: 12,
+            color: 'rgba(0,255,255,0.6)',
+            letterSpacing: '0.1em',
+          }}>
+            bash — tanmay@grid: ~
+          </span>
+          <span style={{
+            position: 'absolute',
+            right: 12,
+            fontFamily: "'Roboto Mono', monospace",
+            fontSize: 11,
+            color: 'rgba(0,255,255,0.3)',
+            cursor: 'default',
+          }}>
+            ✕
+          </span>
         </div>
 
         {/* Terminal body */}
@@ -217,16 +288,17 @@ export default function AboutSector() {
           }}
         >
           {lines.map((line, idx) => {
-            if (line.type === 'cmd') {
-              return (
-                <div key={idx} style={{ color: '#00FFFF' }}>
-                  <span style={{ letterSpacing: '0.1em' }}>{line.text}</span>
-                </div>
-              )
-            }
+            if (line.type === 'cmd') return renderCmdLine(line.text, idx)
             if (line.type === 'output') {
               return (
                 <div key={idx} style={{ color: '#F0F0F0', marginBottom: 8 }}>
+                  {line.text}
+                </div>
+              )
+            }
+            if (line.type === 'error') {
+              return (
+                <div key={idx} style={{ color: '#FF5E00', marginBottom: 8 }}>
                   {line.text}
                 </div>
               )
@@ -241,34 +313,37 @@ export default function AboutSector() {
             return null
           })}
 
-          {/* Currently typing line with cursor */}
+          {/* Currently typing line (typewriter) */}
           {!done && (
-            <div style={{ color: '#00FFFF' }}>
-              <span style={{ letterSpacing: '0.1em' }}>{currentTyping}</span>
-              <span
-                style={{
-                  color: '#00FFFF',
-                  opacity: cursorVisible ? 1 : 0,
-                  marginLeft: 1,
-                }}
-              >
-                ▌
-              </span>
+            <div>
+              {(() => {
+                const promptEnd = currentTyping.indexOf('$ ') + 2
+                const prompt = promptEnd > 1 ? currentTyping.slice(0, promptEnd) : currentTyping
+                const command = promptEnd > 1 ? currentTyping.slice(promptEnd) : ''
+                return (
+                  <>
+                    <span style={{ color: '#28C840', letterSpacing: '0.05em' }}>{prompt}</span>
+                    <span style={{ color: '#00FFFF', letterSpacing: '0.05em' }}>{command}</span>
+                  </>
+                )
+              })()}
+              <span style={{ color: '#00FFFF', opacity: cursorVisible ? 1 : 0, marginLeft: 1 }}>▌</span>
             </div>
           )}
 
-          {/* Blinking cursor at end when done */}
+          {/* Interactive prompt when done */}
           {done && (
-            <div style={{ color: '#00FFFF', marginTop: 4 }}>
-              <span
-                style={{
-                  color: '#00FFFF',
-                  opacity: cursorVisible ? 1 : 0,
-                }}
-              >
-                ▌
-              </span>
-            </div>
+            <>
+              {/* Hint */}
+              <div style={{ color: 'rgba(0,255,255,0.25)', fontSize: 12, marginBottom: 4, fontStyle: 'italic' }}>
+                # type &apos;exit&apos; to return to grid
+              </div>
+              <div>
+                <span style={{ color: '#28C840', letterSpacing: '0.05em' }}>{PROMPT}</span>
+                <span style={{ color: '#00FFFF', letterSpacing: '0.05em' }}>{userInput}</span>
+                <span style={{ color: '#00FFFF', opacity: cursorVisible ? 1 : 0, marginLeft: 1 }}>▌</span>
+              </div>
+            </>
           )}
         </div>
       </div>
