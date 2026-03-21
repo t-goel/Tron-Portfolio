@@ -20,7 +20,7 @@ export function playWithFade(duration = 2000) {
   const s = initAudio()
   s.play()
   s.seek(15)
-  s.fade(0, 0.15, duration)
+  s.fade(0, 0.1, duration)
 }
 
 export function setMuted(muted) {

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { contact } from '../../data/contact'
 
+const EMAIL = contact.email === 'TBD' ? 'contact@example.com' : contact.email
+
 const icons = [
   {
     label: 'GitHub profile',
@@ -13,20 +15,49 @@ const icons = [
     path: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z',
   },
   {
-    label: 'Send email',
-    href: contact.email === 'TBD' ? 'mailto:contact@example.com' : `mailto:${contact.email}`,
+    label: 'Copy email',
+    isEmail: true,
     path: 'M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z',
   },
 ]
 
+const CHECK_PATH = 'M4.5 12.75l6 6 9-13.5'
+
 export default function SocialIcons() {
   const [visible, setVisible] = useState(false)
   const [hovered, setHovered] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50)
     return () => clearTimeout(timer)
   }, [])
+
+  function handleEmailClick(e) {
+    e.preventDefault()
+    navigator.clipboard.writeText(EMAIL).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  const sharedStyle = (i, isActive) => ({
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    border: '1px solid #00FFFF',
+    boxShadow: hovered === i ? '0 0 14px #00FFFF' : '0 0 8px #00FFFF',
+    background: 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease',
+    transitionDelay: visible ? `${i * 80}ms` : '0ms',
+    transform: hovered === i ? 'scale(1.1)' : 'scale(1)',
+    opacity: visible ? 1 : 0,
+  })
 
   return (
     <div
@@ -37,44 +68,62 @@ export default function SocialIcons() {
         gap: '12px',
       }}
     >
-      {icons.map((icon, i) => (
-        <a
-          key={icon.label}
-          href={icon.href}
-          aria-label={icon.label}
-          target={icon.href.startsWith('mailto') ? undefined : '_blank'}
-          rel={icon.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
-          onMouseEnter={() => setHovered(i)}
-          onMouseLeave={() => setHovered(null)}
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            border: '1px solid #00FFFF',
-            boxShadow: hovered === i ? '0 0 14px #00FFFF' : '0 0 8px #00FFFF',
-            background: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease',
-            transitionDelay: visible ? `${i * 80}ms` : '0ms',
-            transform: hovered === i ? 'scale(1.1)' : 'scale(1)',
-            opacity: visible ? 1 : 0,
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="#00FFFF"
-            aria-hidden="true"
+      {icons.map((icon, i) => {
+        if (icon.isEmail) {
+          return (
+            <button
+              key={icon.label}
+              aria-label={copied ? 'Email copied!' : icon.label}
+              onClick={handleEmailClick}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              style={{ ...sharedStyle(i), border: copied ? '1px solid #00FF88' : '1px solid #00FFFF', boxShadow: copied ? '0 0 14px #00FF88' : hovered === i ? '0 0 14px #00FFFF' : '0 0 8px #00FFFF' }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill={copied ? '#00FF88' : '#00FFFF'}
+                stroke={copied ? '#00FF88' : 'none'}
+                strokeWidth={copied ? '2.5' : '0'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ transition: 'fill 0.2s ease' }}
+              >
+                <path
+                  d={copied ? CHECK_PATH : icon.path}
+                  fill={copied ? 'none' : '#00FFFF'}
+                  stroke={copied ? '#00FF88' : 'none'}
+                  strokeWidth={copied ? '2.5' : '0'}
+                />
+              </svg>
+            </button>
+          )
+        }
+        return (
+          <a
+            key={icon.label}
+            href={icon.href}
+            aria-label={icon.label}
+            target="_blank"
+            rel="noopener noreferrer"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            style={sharedStyle(i)}
           >
-            <path d={icon.path} />
-          </svg>
-        </a>
-      ))}
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="#00FFFF"
+              aria-hidden="true"
+            >
+              <path d={icon.path} />
+            </svg>
+          </a>
+        )
+      })}
     </div>
   )
 }
