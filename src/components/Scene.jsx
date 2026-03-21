@@ -8,6 +8,7 @@ import CameraController from './3D/CameraController'
 import Monolith from './3D/Monolith'
 import NameBackdrop from './3D/NameBackdrop'
 import CinematicIntro from './3D/CinematicIntro'
+import AmbientFX from './3D/AmbientFX'
 import { projects } from '../data/projects'
 import { useMobile } from '../hooks/useMobile'
 
@@ -27,6 +28,7 @@ export default function Scene({ mainVisible }) {
       {phase === 2 && mainVisible && <CinematicIntro />}
 
       {phase >= 3 && <CameraController />}
+      {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
       {phase >= 3 && !isMobile && <GatewayPanes />}
       {activeSector === 'projects' && projects.map((p) => (
