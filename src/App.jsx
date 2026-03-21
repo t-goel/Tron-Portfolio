@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import gsap from 'gsap'
 import Scene from './components/Scene'
-import TitleOverlay from './components/UI/TitleOverlay'
-import EnterButton from './components/UI/EnterButton'
 import BootSequence from './components/UI/BootSequence'
 import SocialIcons from './components/UI/SocialIcons'
 import MuteToggle from './components/UI/MuteToggle'
@@ -17,13 +15,13 @@ import { setMuted } from './utils/audioManager'
 import { detectWebGL } from './utils/webglDetect'
 import WebGLFallback from './components/WebGLFallback'
 import { useMobile } from './hooks/useMobile'
+import { contact } from './data/contact'
 
 function App() {
   const webglAvailable = useMemo(() => detectWebGL(), [])
   const isMobile = useMobile()
   const [showBoot, setShowBoot] = useState(true)
   const [mainVisible, setMainVisible] = useState(false)
-  const [titleGlitch, setTitleGlitch] = useState(false)
   const phase = useAppState((s) => s.phase)
   const hudVisible = useAppState((s) => s.hudVisible)
   const setHudVisible = useAppState((s) => s.setHudVisible)
@@ -90,7 +88,7 @@ function App() {
         dpr={[1, 2]}
         style={{ position: 'absolute', top: 0, left: 0 }}
       >
-        <Scene />
+        <Scene mainVisible={mainVisible} />
       </Canvas>
       {/* Sector overlays — mounted outside Canvas */}
       {activeSector === 'projects' && <ProjectsSector />}
@@ -98,12 +96,6 @@ function App() {
       {activeSector === 'skills' && <SkillsSector />}
       {isMobile && phase >= 3 && hudVisible && !activeSector && <MobileGateway />}
       {hudVisible && !activeSector && <GridAffordanceHint />}
-
-      {!showBoot && phase >= 2 && (
-        <TitleOverlay visible={phase === 2} glitch={titleGlitch}>
-          {phase === 2 && <EnterButton onHoverChange={setTitleGlitch} />}
-        </TitleOverlay>
-      )}
 
       {/* DOM disc: visible during dock animation (phase 3 before HUD appears) */}
       {phase >= 3 && !hudVisible && (
@@ -156,7 +148,7 @@ function App() {
               pointerEvents: 'none',
             }}
           >
-            TANMAY GOEL
+            {contact.name}
           </span>
         </div>
       )}
