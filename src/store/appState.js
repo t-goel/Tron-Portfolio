@@ -1,25 +1,34 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-const useAppState = create((set) => ({
-  // Phase management
-  phase: 1, // Start at Phase 1 (Boot Sequence) — skipped via sessionStorage on repeat visits
-  setPhase: (phase) => set({ phase }),
+const useAppState = create(
+  persist(
+    (set) => ({
+      // Phase management
+      phase: 1, // Start at Phase 1 (Boot Sequence) — skipped via sessionStorage on repeat visits
+      setPhase: (phase) => set({ phase }),
 
-  // Audio
-  audioEnabled: true,
-  toggleAudio: () => set((s) => ({ audioEnabled: !s.audioEnabled })),
+      // Audio
+      audioEnabled: true,
+      toggleAudio: () => set((s) => ({ audioEnabled: !s.audioEnabled })),
 
-  // UI visibility
-  hudVisible: false,
-  setHudVisible: (visible) => set({ hudVisible: visible }),
+      // UI visibility
+      hudVisible: false,
+      setHudVisible: (visible) => set({ hudVisible: visible }),
 
-  // Active sector (null, 'about', 'skills', 'projects')
-  activeSector: null,
-  setActiveSector: (sector) => set({ activeSector: sector }),
+      // Active sector (null, 'about', 'skills', 'projects')
+      activeSector: null,
+      setActiveSector: (sector) => set({ activeSector: sector }),
 
-  // Camera transition flag — prevents double-fire during GSAP lerp
-  transitioning: false,
-  setTransitioning: (v) => set({ transitioning: v }),
-}))
+      // Camera transition flag — prevents double-fire during GSAP lerp
+      transitioning: false,
+      setTransitioning: (v) => set({ transitioning: v }),
+    }),
+    {
+      name: 'tron-app-state',
+      partialize: (state) => ({ audioEnabled: state.audioEnabled }),
+    }
+  )
+)
 
 export default useAppState

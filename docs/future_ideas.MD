@@ -4,5 +4,3 @@ Think of expansion, buildings/ect, interatctive terminal, make it non mac, add m
 make background more often and fade out before touching ground
 
 move click and drag to explore to the center of the screen.
-
-make music quieter
