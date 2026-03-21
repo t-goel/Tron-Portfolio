@@ -32,9 +32,11 @@ The existing boot/canvas lifecycle:
 - `t=800ms` — `BootSequence` calls `setPhase(2)` (still visually showing)
 - `t=3000ms` — `handleBootComplete()` fires → `showBoot=false` → Canvas `frameloop` switches from `'never'` to `'always'`
 - `t=3000ms–3350ms` — Canvas is rendering but fully covered by the black fade overlay (`opacity: mainVisible ? 0 : 1` = opaque black). No canvas content is visible to the user during this window.
-- `t=3350ms` — `mainVisible=true` → black fade overlay begins transitioning out (1.2s ease)
+- `t=3350ms` — `mainVisible=true` → black fade overlay begins transitioning out (`transition: 'opacity 1.2s ease-in'`, starting at opacity=1). Ease-in means opacity stays near 1 for the first several hundred milliseconds.
 
 **The cinematic must not start until `mainVisible=true`.** By that point `frameloop='always'` is confirmed active. The 350ms window between `showBoot=false` and `mainVisible=true` is covered by the black overlay — there is no visible flash of the backdrop from the wrong camera angle during that interval.
+
+**Camera snap at mount is hidden by the overlay:** `CinematicIntro` mounts at `t=3350ms`, when the overlay is at `opacity=1` (the fade has just begun). The `camera.position.set(0,3,-34)` call happens instantaneously at mount — before the overlay has faded at all. The 1.2s ease-in fade means the overlay remains near-opaque for several hundred milliseconds, well past when the camera snap occurs. There is no visible jump.
 
 ---
 
@@ -108,9 +110,14 @@ export default function CinematicIntro() {
       mountedRef.current = false
       positionTween.kill()
       lookAtTween.kill()
-      // Note: kill() prevents onComplete from firing if tween is mid-flight.
-      // If component unmounts after tween already completed, setPhase(3) is guarded
-      // by mountedRef. Known dev limitation: React Strict Mode double-invoke will
+      // kill() prevents onComplete from firing if tween is mid-flight.
+      // In the normal completion path: onComplete fires → setPhase(3) → component unmounts
+      // → cleanup runs. mountedRef is still true when onComplete fires (component hasn't
+      // unmounted yet), so setPhase(3) is called correctly.
+      // The mountedRef guard covers the abnormal case: external unmount (dev HMR) while
+      // the tween is still running. In that case cleanup kills the tween before completion,
+      // so onComplete never fires anyway. The guard is a belt-and-suspenders safety net.
+      // Known dev limitation: React Strict Mode double-invoke will
       // fire camera.position.set() twice; second invocation resets to start position,
       // which is correct behavior (tween restarts cleanly).
     }
