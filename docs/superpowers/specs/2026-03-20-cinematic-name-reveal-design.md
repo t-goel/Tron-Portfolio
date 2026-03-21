@@ -22,65 +22,148 @@ Replace the static Phase 2 title screen (name + "ENTER THE GRID" button) with a 
 
 `TitleOverlay`, `EnterButton`, and the `titleGlitch` state in `App.jsx` are removed entirely.
 
+**sessionStorage repeat-visit skip:** Not currently implemented in the codebase. Out of scope for this feature.
+
+---
+
+## Timing Context (Boot Sequence)
+
+The existing boot/canvas lifecycle:
+- `t=800ms` — `BootSequence` calls `setPhase(2)` (still visually showing)
+- `t=3000ms` — `handleBootComplete()` fires → `showBoot=false` → Canvas `frameloop` switches from `'never'` to `'always'`
+- `t=3000ms–3350ms` — Canvas is rendering but fully covered by the black fade overlay (`opacity: mainVisible ? 0 : 1` = opaque black). No canvas content is visible to the user during this window.
+- `t=3350ms` — `mainVisible=true` → black fade overlay begins transitioning out (1.2s ease)
+
+**The cinematic must not start until `mainVisible=true`.** By that point `frameloop='always'` is confirmed active. The 350ms window between `showBoot=false` and `mainVisible=true` is covered by the black overlay — there is no visible flash of the backdrop from the wrong camera angle during that interval.
+
 ---
 
 ## Component: NameBackdrop
 
 **File:** `src/components/3D/NameBackdrop.jsx`
 
-A new 3D component mounted inside `Scene` whenever `phase >= 2`. Uses `@react-three/drei`'s `Text` component to render two lines of text deep in the scene.
+**Mount condition:** `phase >= 2`
+
+Uses `@react-three/drei`'s `Text` component.
 
 **Text content:**
-- Line 1: `TANMAY GOEL` — TR2N font (`/src/assets/fonts/Tron-JOAa.ttf`), large, crimson red (`#FFE8E8`) with emissive red glow matching the existing title style
-- Line 2: `SOFTWARE DEVELOPER` — Roboto Mono, smaller, off-white (`#F0F0F0`), positioned below Line 1
+- Line 1: `TANMAY GOEL` — TR2N font (`/src/assets/fonts/Tron-JOAa.ttf`), `fontSize={3}`, `color="#FF0000"` (Crimson Red). The scene's Bloom postprocessing produces the glowing red effect.
+- Line 2: `SOFTWARE DEVELOPER` — Roboto Mono, `fontSize={0.8}`, `color="#F0F0F0"`, positioned ~1.5 units below Line 1.
 
-**Position:** `[0, 3, -40]` — far behind the gateway panes (projects pane sits around z=-12), ensuring the text reads as a distant backdrop from the home camera at `[0, 8, 14]`.
+**Position:** `[0, 3, -40]`
 
-**Sizing:** Large enough to fill the frame when the camera is at the close-up start position, but legible at distance from home. Exact font size tuned during implementation.
+**Legibility check:** At FOV=60, camera at `[0, 8, 14]` looking toward `[0, 0, 0]`, the text at z=-40 is ~54 units away. Starting `fontSize={3}` is approximately 3° vertical field — borderline for a hero element. **If legibility is insufficient at this distance, adjust to `z=-30` and/or increase `fontSize` to `{5}`.** Implementer should verify visually and adjust before considering this criterion met.
 
-**Persistence:** Remains mounted for all phases >= 2, so the name is always visible as a backdrop in the grid world.
+**Long-term visibility:** Permanently visible for all phases >= 2. Intentionally always present as a background element. No fade-out. Naturally occluded by foreground scene geometry.
 
 ---
 
-## Camera Cinematic Sequence
+## Component: CinematicIntro
 
-**Modified file:** `src/components/3D/CameraController.jsx`
+**File:** `src/components/3D/CinematicIntro.jsx`
 
-The intro sequence fires once when phase becomes 2. It does not conflict with the existing sector camera logic (which only runs on `activeSector` changes).
+**Mount condition:** `phase === 2 && mainVisible`
 
-**Timing:**
+Unmounts when phase advances to 3.
 
-1. **Phase 2 start** — camera is immediately repositioned (no animation, instant) to `[0, 3, -34]` facing the text at `[0, 3, -40]`
-2. **1.5s pause** — name is readable, nothing moves
-3. **GSAP pull-back, ~2.5s, `power2.inOut`** — animates `camera.position` from `[0, 3, -34]` to `[0, 8, 14]` (home); simultaneously animates the camera's lookAt target from `[0, 3, -40]` to `[0, 0, 0]`
-4. **On complete** — calls `setPhase(3)`, triggering the existing disc dock → HUD sequence
+> **Why a separate component:** `CameraController` only mounts at `phase >= 3`. `CinematicIntro` runs exclusively at `phase === 2` — they never overlap, and both use the same default R3F canvas camera from `useThree()`.
 
-**Implementation note on lookAt:** R3F cameras require an explicit `camera.lookAt()` call each frame when animating the look target. The GSAP tween will animate a `lookAt` proxy object `{ x, y, z }` and call `camera.lookAt(x, y, z)` in the `onUpdate` callback.
+**Implementation:**
+
+```js
+export default function CinematicIntro() {
+  const { camera } = useThree()
+  const setPhase = useAppState((s) => s.setPhase)
+
+  useEffect(() => {
+    const mountedRef = { current: true }
+
+    // Synchronously position camera before first rendered frame
+    camera.position.set(0, 3, -34)
+    camera.lookAt(0, 3, -40)
+
+    // Proxy for lookAt interpolation — tweened in parallel with camera.position
+    const lookAtProxy = { x: 0, y: 3, z: -40 }
+
+    const positionTween = gsap.to(camera.position, {
+      x: 0, y: 8, z: 14,
+      duration: 2.5,
+      delay: 1.5,
+      ease: 'power2.inOut',
+      onUpdate: () => camera.lookAt(lookAtProxy.x, lookAtProxy.y, lookAtProxy.z),
+      onComplete: () => {
+        if (mountedRef.current) setPhase(3)
+      },
+    })
+
+    // Concurrent tween on lookAt proxy — same duration + delay as position tween
+    const lookAtTween = gsap.to(lookAtProxy, {
+      x: 0, y: 1, z: 0,   // matches OrbitControls target={[0, 1, 0]} in Scene.jsx
+      duration: 2.5,
+      delay: 1.5,
+      ease: 'power2.inOut',
+    })
+
+    return () => {
+      mountedRef.current = false
+      positionTween.kill()
+      lookAtTween.kill()
+      // Note: kill() prevents onComplete from firing if tween is mid-flight.
+      // If component unmounts after tween already completed, setPhase(3) is guarded
+      // by mountedRef. Known dev limitation: React Strict Mode double-invoke will
+      // fire camera.position.set() twice; second invocation resets to start position,
+      // which is correct behavior (tween restarts cleanly).
+    }
+  }, [camera, setPhase])
+
+  return null
+}
+```
+
+---
+
+## Scene.jsx Changes
+
+```jsx
+// Before CameraController and GridFloor (which mount at phase >= 3):
+{phase >= 2 && <NameBackdrop />}
+{phase === 2 && mainVisible && <CinematicIntro />}
+```
+
+`mainVisible` is passed as a new prop from `App.jsx` to `Scene`.
 
 ---
 
 ## App.jsx Changes
 
+- Pass `mainVisible` prop to `<Scene mainVisible={mainVisible} />`
 - Remove `TitleOverlay` import and render
 - Remove `EnterButton` import and render
 - Remove `titleGlitch` state and `setTitleGlitch`
-- Phase 2 no longer renders any 2D overlay — the cinematic is fully 3D
-- The `sessionStorage` repeat-visit skip (if present) should skip to phase 3, not phase 2
+- Remove the `onHoverChange` prop wiring
 
 ---
 
 ## Data Flow
 
 ```
-Boot ends
-  → setPhase(2)
-  → CameraController detects phase 2
-  → Instant reposition to [0, 3, -34]
-  → 1.5s setTimeout
-  → GSAP tween: position + lookAt → home
-  → onComplete: setPhase(3)
-  → Existing disc dock animation fires
-  → setHudVisible(true)
+t=0       BootSequence starts
+t=800ms   setPhase(2) — NameBackdrop not yet mounted (mainVisible still false)
+t=3000ms  handleBootComplete → showBoot=false → frameloop='always'
+t=3350ms  mainVisible=true
+
+  → Scene mounts NameBackdrop (phase >= 2)
+  → Scene mounts CinematicIntro (phase === 2 && mainVisible)
+  → camera.position.set(0,3,-34), camera.lookAt(0,3,-40)
+  → 1.5s GSAP delay
+
+t≈4850ms  positionTween + lookAtTween fire simultaneously (2.5s)
+
+t≈7350ms  onComplete: setPhase(3)
+  → CinematicIntro unmounts (phase !== 2)
+  → App.jsx disc dock useEffect fires (phase === 3)
+  → disc dock GSAP completes → setHudVisible(true)
+  → CameraController mounts, OrbitControls mounts (phase >= 3)
   → Grid world interactive
 ```
 
@@ -88,12 +171,12 @@ Boot ends
 
 ## What Is Not Changing
 
-- Phase 1 (BootSequence) — unchanged
-- Phase 3+ disc dock and HUD animations — unchanged
-- Sector camera transitions (about/skills/projects) — unchanged
-- `appState.js` phase numbering — unchanged
-- `MuteToggle`, `SocialIcons`, `GridAffordanceHint` — unchanged
-- Mobile path (`MobileGateway`) — unchanged
+- Phase 1 (`BootSequence`) — unchanged; it already calls `setPhase(2)` and `onComplete`, both still used
+- Phase 3+ disc dock and HUD (`App.jsx` lines 55-71) — purely reactive to `phase === 3`, no changes
+- `CameraController` — unchanged
+- Sector camera transitions — unchanged
+- `appState.js` — unchanged
+- `MuteToggle`, `SocialIcons`, `GridAffordanceHint`, `MobileGateway` — unchanged
 
 ---
 
@@ -102,6 +185,6 @@ Boot ends
 - After boot, camera opens tight on the name text with no user interaction required
 - Name and subtitle are clearly readable during the 1.5s pause
 - Pull-back is smooth and cinematic (~2.5s)
-- Once at home position, the name is visible as a backdrop in the distance behind the gateway panes
-- Phase 3 disc dock fires automatically with no regression
+- Once at home position, the name is visible as a permanent backdrop in the distance behind the gateway panes
+- Phase 3 disc dock fires automatically with no regression in timing or behavior
 - `TitleOverlay` and `EnterButton` are fully removed with no dead code remaining
