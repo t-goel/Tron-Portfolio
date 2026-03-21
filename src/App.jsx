@@ -15,6 +15,7 @@ import { setMuted } from './utils/audioManager'
 import { detectWebGL } from './utils/webglDetect'
 import WebGLFallback from './components/WebGLFallback'
 import { useMobile } from './hooks/useMobile'
+import { contact } from './data/contact'
 
 function App() {
   const webglAvailable = useMemo(() => detectWebGL(), [])
@@ -147,7 +148,7 @@ function App() {
               pointerEvents: 'none',
             }}
           >
-            TANMAY GOEL
+            {contact.name}
           </span>
         </div>
       )}
