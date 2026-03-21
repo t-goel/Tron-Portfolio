@@ -27,7 +27,7 @@ export default function Scene({ mainVisible }) {
       {phase === 2 && mainVisible && <CinematicIntro />}
 
       {phase >= 3 && <CameraController />}
-      {phase >= 3 && <GridFloor />}
+      {phase >= 2 && <GridFloor />}
       {phase >= 3 && !isMobile && <GatewayPanes />}
       {activeSector === 'projects' && projects.map((p) => (
         <Monolith

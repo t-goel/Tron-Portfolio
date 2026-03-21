@@ -24,7 +24,7 @@ export default function CinematicIntro() {
     const mountedRef = { current: true }
 
     // Synchronously snap camera before first rendered frame
-    camera.position.set(0, 3, -34)
+    camera.position.set(0, 3, -20)
     camera.lookAt(0, 3, -40)
 
     // CameraController (and its OrbitControls) only mounts at phase >= 3,
