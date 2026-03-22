@@ -5,11 +5,9 @@ import useAppState from '../store/appState'
 import GridFloor from './3D/GridFloor'
 import GatewayPanes from './3D/GatewayPanes'
 import CameraController from './3D/CameraController'
-import Monolith from './3D/Monolith'
 import NameBackdrop from './3D/NameBackdrop'
 import CinematicIntro from './3D/CinematicIntro'
 import AmbientFX from './3D/AmbientFX'
-import { projects } from '../data/projects'
 import { useMobile } from '../hooks/useMobile'
 
 export default function Scene({ mainVisible }) {
@@ -31,15 +29,6 @@ export default function Scene({ mainVisible }) {
       {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
       {!isMobile && <GatewayPanes />}
-      {activeSector === 'projects' && projects.map((p) => (
-        <Monolith
-          key={p.id}
-          position={p.position}
-          accentColor={p.active ? '#FF0000' : '#FF5E00'}
-          active={p.active}
-          name={p.name}
-        />
-      ))}
 
       {phase >= 3 && !activeSector && !isMobile && (
         <OrbitControls
