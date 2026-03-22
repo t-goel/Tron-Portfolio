@@ -1,20 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import * as d3 from 'd3-force'
 import { skillCategories } from '../../data/skills'
+
+const HUB_RADIUS = 16
+const CAT_RADIUS = 28
+const SKILL_RADIUS = 16
+const FORMATION_RADIUS = 200
 
 export default function SkillsSector() {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
-  const nodesRef = useRef([])
-  const tier2Ref = useRef([])
-  const racersRef = useRef([])
+  const simRef = useRef(null)
+  const nodesRef = useRef([])   // all nodes currently in simulation
+  const linksRef = useRef([])   // all links currently in simulation
+  const racersRef = useRef([])  // active light-racer pulses
   const hoverRef = useRef(null)
-  const expandedRef = useRef({})
-  const rafRef = useRef(null)
-  const ctxRef = useRef(null)
+  const expandedRef = useRef(new Set())
+  const entryOpacityRef = useRef({})  // catId -> 0..1
   const dimsRef = useRef({ w: 0, h: 0 })
+  const rafRef = useRef(null)
   const [visible, setVisible] = useState(false)
 
-  // Helper: parse hex color to rgba string at given opacity
+  // ── helpers ──────────────────────────────────────────────────────────────
+
   function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16)
     const g = parseInt(hex.slice(3, 5), 16)
@@ -22,389 +30,396 @@ export default function SkillsSector() {
     return `rgba(${r},${g},${b},${alpha})`
   }
 
-  // Compute Tier 1 node positions from container dimensions
-  function computeTier1Nodes(w, h) {
-    const centerX = w / 2
-    const centerY = h / 2
-    const formationRadius = 200
+  function catAngle(i) {
+    return (2 * Math.PI * i) / skillCategories.length - Math.PI / 2
+  }
+
+  function catFixedPos(i, cx, cy) {
+    const angle = catAngle(i)
+    return {
+      fx: cx + FORMATION_RADIUS * Math.cos(angle),
+      fy: cy + FORMATION_RADIUS * Math.sin(angle),
+    }
+  }
+
+  // ── node/link builders ───────────────────────────────────────────────────
+
+  function buildHubNode(cx, cy) {
+    return { id: 'hub', kind: 'hub', fx: cx, fy: cy, x: cx, y: cy }
+  }
+
+  function buildCatNodes(cx, cy) {
     return skillCategories.map((cat, i) => {
-      const angle = (2 * Math.PI * i) / 5 - Math.PI / 2
+      const pos = catFixedPos(i, cx, cy)
       return {
-        id: cat.id,
+        id: `cat:${cat.id}`,
+        kind: 'cat',
+        catId: cat.id,
         label: cat.label,
         color: cat.color,
         skills: cat.skills,
-        x: centerX + formationRadius * Math.cos(angle),
-        y: centerY + formationRadius * Math.sin(angle),
-        radius: 30,
-        expanded: false,
-        angle,
+        angle: catAngle(i),
+        ...pos,
+        x: pos.fx,
+        y: pos.fy,
       }
     })
   }
 
-  // Compute Tier 2 node target positions for a given Tier 1 node
-  function computeTier2Targets(node) {
-    const count = node.skills.length
-    return node.skills.map((skill, i) => {
-      const angle = (2 * Math.PI * i) / count + node.angle
-      const targetX = node.x + 80 * Math.cos(angle)
-      const targetY = node.y + 80 * Math.sin(angle)
-      return {
-        parentId: node.id,
-        label: skill,
-        x: node.x,
-        y: node.y,
-        targetX,
-        targetY,
-        radius: 18,
-        color: node.color,
-        visible: false,
+  function buildSkillNodes(catNode) {
+    return catNode.skills.map((skill) => ({
+      id: `skill:${catNode.catId}:${skill}`,
+      kind: 'skill',
+      catId: catNode.catId,
+      label: skill,
+      color: catNode.color,
+      // start at parent position with small jitter
+      x: catNode.x + (Math.random() - 0.5) * 10,
+      y: catNode.y + (Math.random() - 0.5) * 10,
+    }))
+  }
+
+  function buildLinks(nodes) {
+    const links = []
+    const hub = nodes.find((n) => n.id === 'hub')
+    nodes.forEach((n) => {
+      if (n.kind === 'cat') links.push({ source: hub, target: n, kind: 'hub-cat' })
+      if (n.kind === 'skill') {
+        const cat = nodes.find((c) => c.id === `cat:${n.catId}`)
+        if (cat) links.push({ source: cat, target: n, kind: 'cat-skill' })
       }
     })
+    return links
   }
+
+  // ── draw function ─────────────────────────────────────────────────────────
 
   function draw(ctx, w, h) {
     ctx.clearRect(0, 0, w, h)
 
     const nodes = nodesRef.current
-    const tier2 = tier2Ref.current
+    const links = linksRef.current
     const racers = racersRef.current
     const hoverId = hoverRef.current
-    const centerX = w / 2
-    const centerY = h / 2
 
-    // Draw hub edges (center to each Tier 1 node)
-    ctx.strokeStyle = 'rgba(0,255,255,0.2)'
-    ctx.lineWidth = 1
-    nodes.forEach((node) => {
+    // ── Draw edges ──────────────────────────────────────────────────────────
+    links.forEach((link) => {
+      const s = link.source
+      const t = link.target
+      if (!s || !t) return
+
+      // Determine opacity
+      const isHovered =
+        hoverId === t.id || hoverId === s.id
+      const baseAlpha = link.kind === 'hub-cat' ? 0.2 : 0.35
+      const alpha = isHovered ? 0.8 : baseAlpha
+      const color = link.kind === 'hub-cat' ? '#00FFFF' : (t.color || s.color)
+
+      ctx.strokeStyle = hexToRgba(color, alpha)
+      ctx.lineWidth = isHovered ? 1.5 : 1
       ctx.beginPath()
-      ctx.moveTo(centerX, centerY)
-      ctx.lineTo(node.x, node.y)
+      ctx.moveTo(s.x, s.y)
+      ctx.lineTo(t.x, t.y)
       ctx.stroke()
     })
 
-    // Draw connecting lines from Tier 1 to visible Tier 2 nodes
-    tier2.forEach((t2) => {
-      if (!t2.visible) return
-      const parent = nodes.find((n) => n.id === t2.parentId)
-      if (!parent) return
-      const isHovered = hoverId === `t2:${t2.parentId}:${t2.label}`
-      ctx.strokeStyle = hexToRgba(parent.color, isHovered ? 0.8 : 0.4)
-      ctx.lineWidth = isHovered ? 2 : 1
-      ctx.beginPath()
-      ctx.moveTo(parent.x, parent.y)
-      ctx.lineTo(t2.targetX, t2.targetY)
-      ctx.stroke()
-    })
-
-    // Draw Tier 1 nodes
-    nodes.forEach((node) => {
-      const isHovered = hoverId === `t1:${node.id}`
-      ctx.beginPath()
-      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
-      ctx.fillStyle = node.color
-      ctx.fill()
-      if (isHovered) {
-        ctx.strokeStyle = node.color
-        ctx.lineWidth = 3
-        ctx.stroke()
-        // Outer glow ring
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, node.radius + 6, 0, Math.PI * 2)
-        ctx.strokeStyle = hexToRgba(node.color, 0.4)
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
-      // Tier 1 label
-      ctx.font = "14px 'Roboto Mono', monospace"
-      ctx.fillStyle = node.color
-      ctx.textAlign = 'center'
-      ctx.fillText(node.label, node.x, node.y + node.radius + 18)
-    })
-
-    // Draw visible Tier 2 nodes
-    tier2.forEach((t2) => {
-      if (!t2.visible) return
-      const isHovered = hoverId === `t2:${t2.parentId}:${t2.label}`
-      ctx.beginPath()
-      ctx.arc(t2.targetX, t2.targetY, t2.radius, 0, Math.PI * 2)
-      ctx.fillStyle = hexToRgba(t2.color, isHovered ? 1.0 : 0.7)
-      ctx.fill()
-      if (isHovered) {
-        ctx.strokeStyle = t2.color
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
-      // Tier 2 label
-      ctx.font = "12px 'Roboto Mono', monospace"
-      ctx.fillStyle = t2.color
-      ctx.textAlign = 'left'
-      ctx.fillText(t2.label, t2.targetX + 22, t2.targetY + 4)
-    })
-
-    // Draw active racer trails
+    // ── Draw racer pulses ───────────────────────────────────────────────────
     racers.forEach((racer) => {
-      const curX = racer.fromX + (racer.toX - racer.fromX) * racer.progress
-      const curY = racer.fromY + (racer.toY - racer.fromY) * racer.progress
+      const px = racer.fromX + (racer.toX - racer.fromX) * racer.t
+      const py = racer.fromY + (racer.toY - racer.fromY) * racer.t
       ctx.beginPath()
-      ctx.moveTo(racer.fromX, racer.fromY)
-      ctx.lineTo(curX, curY)
-      ctx.strokeStyle = 'rgba(0,255,255,0.6)'
-      ctx.lineWidth = 2
-      ctx.stroke()
-      // Bright dot at racer head
-      ctx.beginPath()
-      ctx.arc(curX, curY, 3, 0, Math.PI * 2)
+      ctx.arc(px, py, 3, 0, Math.PI * 2)
       ctx.fillStyle = '#00FFFF'
       ctx.fill()
     })
-  }
 
-  function startExpansion(node) {
-    // Cancel any running rAF
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
+    // ── Draw nodes ──────────────────────────────────────────────────────────
+    nodes.forEach((node) => {
+      const isHovered = hoverId === node.id
 
-    expandedRef.current[node.id] = true
-
-    // Compute targets and create Tier 2 entries (replacing existing for this parent)
-    const newTier2 = computeTier2Targets(node)
-    // Remove existing tier2 for this parent, add new ones (invisible initially)
-    tier2Ref.current = [
-      ...tier2Ref.current.filter((t) => t.parentId !== node.id),
-      ...newTier2,
-    ]
-
-    // Create racers
-    const newRacers = newTier2.map((t2, i) => ({
-      fromX: node.x,
-      fromY: node.y,
-      toX: t2.targetX,
-      toY: t2.targetY,
-      progress: 0,
-      color: node.color,
-      parentId: node.id,
-      skillLabel: t2.label,
-    }))
-    racersRef.current = [...racersRef.current.filter((r) => r.parentId !== node.id), ...newRacers]
-
-    const duration = 600
-    const startTime = performance.now()
-    const ctx = ctxRef.current
-    const { w, h } = dimsRef.current
-
-    function tick(timestamp) {
-      const elapsed = timestamp - startTime
-      let anyRunning = false
-
-      racersRef.current = racersRef.current.map((racer) => {
-        if (racer.parentId !== node.id) return racer
-        const progress = Math.min(elapsed / duration, 1)
-        if (progress >= 1) {
-          // Mark corresponding Tier 2 node as visible
-          tier2Ref.current = tier2Ref.current.map((t2) =>
-            t2.parentId === node.id && t2.label === racer.skillLabel
-              ? { ...t2, visible: true }
-              : t2
-          )
+      let opacity = 1
+      if (node.kind === 'cat') {
+        const entry = entryOpacityRef.current[node.catId]
+        if (!entry || entry.startTime === null) {
+          opacity = 0
         } else {
-          anyRunning = true
+          const FADE_MS = 400
+          opacity = Math.min((performance.now() - entry.startTime) / FADE_MS, 1)
         }
-        return { ...racer, progress }
-      })
-
-      draw(ctx, w, h)
-
-      if (anyRunning) {
-        rafRef.current = requestAnimationFrame(tick)
-      } else {
-        // Clear racers for this parent once done
-        racersRef.current = racersRef.current.filter((r) => r.parentId !== node.id)
-        rafRef.current = null
-        draw(ctx, w, h)
       }
-    }
+      if (opacity === 0) return
 
-    rafRef.current = requestAnimationFrame(tick)
+      const radius = node.kind === 'hub' ? HUB_RADIUS : node.kind === 'cat' ? CAT_RADIUS : SKILL_RADIUS
+      const color = node.kind === 'hub' ? '#00FFFF' : node.color
+
+      // Fill
+      ctx.globalAlpha = opacity * (node.kind === 'skill' ? 0.85 : 1)
+      ctx.beginPath()
+      ctx.arc(node.x, node.y, radius, 0, Math.PI * 2)
+      ctx.fillStyle = hexToRgba(color, node.kind === 'skill' ? 0.18 : 0.22)
+      ctx.fill()
+
+      // Border
+      ctx.strokeStyle = isHovered ? color : hexToRgba(color, 0.9)
+      ctx.lineWidth = isHovered ? 2 : 1.5
+      ctx.stroke()
+
+      // Outer glow ring on hover
+      if (isHovered) {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2)
+        ctx.strokeStyle = hexToRgba(color, 0.35)
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+      }
+
+      // Label
+      ctx.globalAlpha = opacity
+      ctx.font = node.kind === 'hub'
+        ? "bold 10px 'Roboto Mono', monospace"
+        : node.kind === 'cat'
+        ? "11px 'Roboto Mono', monospace"
+        : "10px 'Roboto Mono', monospace"
+      ctx.fillStyle = color
+      ctx.textAlign = 'center'
+
+      if (node.kind === 'hub') {
+        ctx.fillText('SKILLS', node.x, node.y + 4)
+      } else if (node.kind === 'cat') {
+        ctx.fillText(node.label, node.x, node.y + radius + 16)
+      } else {
+        ctx.fillText(node.label, node.x, node.y + SKILL_RADIUS + 13)
+      }
+
+      ctx.globalAlpha = 1
+    })
   }
 
-  function startCollapse(node) {
-    // Cancel any running rAF
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
+  // ── expand/collapse ───────────────────────────────────────────────────────
 
-    expandedRef.current[node.id] = false
+  function expandCategory(catNode) {
+    const newSkillNodes = buildSkillNodes(catNode)
+    const updatedNodes = [...nodesRef.current, ...newSkillNodes]
+    nodesRef.current = updatedNodes
 
-    const visibleT2 = tier2Ref.current.filter((t) => t.parentId === node.id && t.visible)
+    const newLinks = buildLinks(updatedNodes)
+    linksRef.current = newLinks
 
-    // Create reverse racers
-    const reverseRacers = visibleT2.map((t2) => ({
-      fromX: t2.targetX,
-      fromY: t2.targetY,
-      toX: node.x,
-      toY: node.y,
-      progress: 0,
-      color: node.color,
-      parentId: node.id,
-      skillLabel: t2.label,
-      isCollapse: true,
+    // Spawn racers: one per new skill node, catNode → skillNode
+    const newRacers = newSkillNodes.map((sn) => ({
+      id: `racer:${sn.id}`,
+      fromX: catNode.x, fromY: catNode.y,
+      toX: catNode.x, toY: catNode.y, // destination updates each frame
+      skillId: sn.id,
+      t: 0,
+      duration: 500,
+      startTime: performance.now(),
     }))
-    racersRef.current = [...racersRef.current.filter((r) => r.parentId !== node.id), ...reverseRacers]
+    racersRef.current = [...racersRef.current, ...newRacers]
 
-    // Hide Tier 2 nodes immediately so they don't render while collapsing
-    tier2Ref.current = tier2Ref.current.map((t2) =>
-      t2.parentId === node.id ? { ...t2, visible: false } : t2
-    )
-
-    const duration = 400
-    const startTime = performance.now()
-    const ctx = ctxRef.current
-    const { w, h } = dimsRef.current
-
-    function tick(timestamp) {
-      const elapsed = timestamp - startTime
-      let anyRunning = false
-
-      racersRef.current = racersRef.current.map((racer) => {
-        if (racer.parentId !== node.id || !racer.isCollapse) return racer
-        const progress = Math.min(elapsed / duration, 1)
-        if (progress < 1) anyRunning = true
-        return { ...racer, progress }
-      })
-
-      draw(ctx, w, h)
-
-      if (anyRunning) {
-        rafRef.current = requestAnimationFrame(tick)
-      } else {
-        racersRef.current = racersRef.current.filter((r) => r.parentId !== node.id)
-        rafRef.current = null
-        draw(ctx, w, h)
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(tick)
+    // Update simulation
+    const sim = simRef.current
+    sim.nodes(updatedNodes)
+    sim.force('link').links(newLinks)
+    sim.alpha(0.8).restart()
   }
+
+  function collapseCategory(catNode) {
+    // Spawn reverse racers: skill node position → category position
+    const skillNodes = nodesRef.current.filter(
+      (n) => n.kind === 'skill' && n.catId === catNode.catId
+    )
+    const reverseRacers = skillNodes.map((sn) => ({
+      id: `racer:collapse:${sn.id}`,
+      fromX: sn.x, fromY: sn.y,
+      toX: catNode.x, toY: catNode.y,
+      skillId: null,  // destination is fixed (catNode), not a moving skill node
+      t: 0,
+      duration: 400,
+      startTime: performance.now(),
+    }))
+    racersRef.current = [...racersRef.current, ...reverseRacers]
+
+    // After animation completes, remove skill nodes from simulation
+    setTimeout(() => {
+      const remainingNodes = nodesRef.current.filter(
+        (n) => !(n.kind === 'skill' && n.catId === catNode.catId)
+      )
+      nodesRef.current = remainingNodes
+      linksRef.current = buildLinks(remainingNodes)
+      const sim = simRef.current
+      sim.nodes(remainingNodes)
+      sim.force('link').links(linksRef.current)
+      sim.alpha(0.3).restart()
+    }, 420)
+  }
+
+  // ── initialization useEffect ──────────────────────────────────────────────
 
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
 
+    const dpr = window.devicePixelRatio || 1
+    const w = container.clientWidth
+    const h = container.clientHeight
+    canvas.width = w * dpr
+    canvas.height = h * dpr
     const ctx = canvas.getContext('2d')
-    ctxRef.current = ctx
+    ctx.scale(dpr, dpr)
+    dimsRef.current = { w, h }
 
-    function setupCanvas() {
-      const dpr = window.devicePixelRatio || 1
-      const w = container.clientWidth
-      const h = container.clientHeight
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      ctx.scale(dpr, dpr)
-      dimsRef.current = { w, h }
-      // Recompute node positions
-      nodesRef.current = computeTier1Nodes(w, h)
-      // Recompute tier2 positions for any expanded nodes
-      const newTier2 = []
-      nodesRef.current.forEach((node) => {
-        if (expandedRef.current[node.id]) {
-          const targets = computeTier2Targets(node)
-          const existing = tier2Ref.current.filter((t) => t.parentId === node.id)
-          targets.forEach((t2) => {
-            const prev = existing.find((e) => e.label === t2.label)
-            newTier2.push({ ...t2, visible: prev ? prev.visible : false })
-          })
-        }
-      })
-      tier2Ref.current = newTier2
-      draw(ctx, w, h)
-    }
+    const cx = w / 2
+    const cy = h / 2
 
-    setupCanvas()
+    // Build initial nodes (hub + categories, no skills yet)
+    const hub = buildHubNode(cx, cy)
+    const catNodes = buildCatNodes(cx, cy)
+    const initialNodes = [hub, ...catNodes]
+    nodesRef.current = initialNodes
+    linksRef.current = buildLinks(initialNodes)
 
-    const ro = new ResizeObserver(() => {
-      // Reset scale before re-setup
-      ctx.setTransform(1, 0, 0, 1, 0, 0)
-      setupCanvas()
+    // Entry opacity: stagger category nodes in with a fade (track start time per node)
+    // entryOpacityRef stores { startTime } per catId; draw loop computes current opacity
+    skillCategories.forEach((cat, i) => {
+      entryOpacityRef.current[cat.id] = { startTime: null }
+      setTimeout(() => {
+        entryOpacityRef.current[cat.id] = { startTime: performance.now() }
+      }, i * 80)
     })
-    ro.observe(container)
 
-    // Fade in
+    // d3-force simulation
+    const sim = d3.forceSimulation(initialNodes)
+      .force('link', d3.forceLink(linksRef.current).id((d) => d.id).distance(90).strength(0.8))
+      .force('charge', d3.forceManyBody().strength(-120))
+      .force('collide', d3.forceCollide(30))
+      .alphaDecay(0.03)
+      .on('tick', () => draw(ctx, w, h))
+
+    simRef.current = sim
+
+    // Fade panel in
     requestAnimationFrame(() => setVisible(true))
 
     return () => {
+      sim.stop()
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      ro.disconnect()
     }
   }, [])
 
-  function handleClick(e) {
+  // ── click handler useEffect ───────────────────────────────────────────────
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const mx = e.clientX - rect.left
-    const my = e.clientY - rect.top
 
-    const nodes = nodesRef.current
-    for (const node of nodes) {
-      const dist = Math.sqrt((mx - node.x) ** 2 + (my - node.y) ** 2)
-      if (dist <= node.radius) {
-        if (!expandedRef.current[node.id]) {
-          startExpansion(node)
-        } else {
-          startCollapse(node)
+    function handleClick(e) {
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = dimsRef.current.w / rect.width
+      const scaleY = dimsRef.current.h / rect.height
+      const mx = (e.clientX - rect.left) * scaleX
+      const my = (e.clientY - rect.top) * scaleY
+
+      for (const node of nodesRef.current) {
+        if (node.kind !== 'cat') continue
+        const dist = Math.hypot(mx - node.x, my - node.y)
+        if (dist <= CAT_RADIUS + 8) {
+          if (expandedRef.current.has(node.catId)) {
+            expandedRef.current.delete(node.catId)
+            collapseCategory(node)
+          } else {
+            expandedRef.current.add(node.catId)
+            expandCategory(node)
+          }
+          return
         }
-        return
       }
     }
-  }
 
-  function handleMouseMove(e) {
+    canvas.addEventListener('click', handleClick)
+    return () => canvas.removeEventListener('click', handleClick)
+  }, [])
+
+  // ── racer animation loop ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    let running = true
+
+    function tickRacers() {
+      if (!running) return
+      const now = performance.now()
+      let changed = false
+
+      racersRef.current = racersRef.current
+        .map((racer) => {
+          const elapsed = now - racer.startTime
+          const t = Math.min(elapsed / racer.duration, 1)
+          // For expand racers: update destination to current skill node position (node is moving)
+          // For collapse racers: skillId is null, destination is fixed
+          let toX = racer.toX
+          let toY = racer.toY
+          if (racer.skillId) {
+            const skillNode = nodesRef.current.find((n) => n.id === racer.skillId)
+            if (skillNode) { toX = skillNode.x; toY = skillNode.y }
+          }
+          changed = true
+          return { ...racer, t, toX, toY }
+        })
+        .filter((r) => r.t < 1)
+
+      if (changed) {
+        const { w, h } = dimsRef.current
+        const ctx = canvasRef.current?.getContext('2d')
+        if (ctx) draw(ctx, w, h)
+      }
+
+      rafRef.current = requestAnimationFrame(tickRacers)
+    }
+
+    rafRef.current = requestAnimationFrame(tickRacers)
+    return () => {
+      running = false
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
+
+  // ── mousemove hover ───────────────────────────────────────────────────────
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const mx = e.clientX - rect.left
-    const my = e.clientY - rect.top
 
-    const nodes = nodesRef.current
-    const tier2 = tier2Ref.current
-    let found = null
+    function handleMouseMove(e) {
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = dimsRef.current.w / rect.width
+      const scaleY = dimsRef.current.h / rect.height
+      const mx = (e.clientX - rect.left) * scaleX
+      const my = (e.clientY - rect.top) * scaleY
 
-    // Check Tier 2 first (smaller, on top visually)
-    for (const t2 of tier2) {
-      if (!t2.visible) continue
-      const dist = Math.sqrt((mx - t2.targetX) ** 2 + (my - t2.targetY) ** 2)
-      if (dist <= 35) {
-        found = `t2:${t2.parentId}:${t2.label}`
-        break
-      }
-    }
-
-    // Check Tier 1
-    if (!found) {
-      for (const node of nodes) {
-        const dist = Math.sqrt((mx - node.x) ** 2 + (my - node.y) ** 2)
-        if (dist <= 35) {
-          found = `t1:${node.id}`
+      let found = null
+      for (const node of nodesRef.current) {
+        const r = node.kind === 'hub' ? HUB_RADIUS : node.kind === 'cat' ? CAT_RADIUS : SKILL_RADIUS
+        if (Math.hypot(mx - node.x, my - node.y) <= r + 8) {
+          found = node.id
           break
         }
       }
+
+      const prev = hoverRef.current
+      hoverRef.current = found
+      canvas.style.cursor = found ? 'pointer' : 'default'
+
+      if (prev !== found) {
+        const { w, h } = dimsRef.current
+        const ctx = canvas.getContext('2d')
+        draw(ctx, w, h)
+      }
     }
 
-    const prev = hoverRef.current
-    hoverRef.current = found
-    canvas.style.cursor = found ? 'pointer' : 'default'
-
-    if (prev !== found) {
-      const { w, h } = dimsRef.current
-      draw(ctxRef.current, w, h)
-    }
-  }
+    canvas.addEventListener('mousemove', handleMouseMove)
+    return () => canvas.removeEventListener('mousemove', handleMouseMove)
+  }, [])
 
   return (
     <div
@@ -423,8 +438,6 @@ export default function SkillsSector() {
       <canvas
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block' }}
-        onClick={handleClick}
-        onMouseMove={handleMouseMove}
       />
     </div>
   )
