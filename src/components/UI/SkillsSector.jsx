@@ -2,10 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3-force'
 import { skillCategories } from '../../data/skills'
 
-const HUB_RADIUS = 16
-const CAT_RADIUS = 28
-const SKILL_RADIUS = 16
+const HUB_RADIUS = 36
+const SKILL_PILL_H = 28
+const CAT_PILL_H = 36
 const FORMATION_RADIUS = 200
+
+// Roboto Mono character widths: 10px font ≈ 7px/char, 11px font ≈ 7.7px/char
+function skillPillWidth(label) {
+  return Math.max(80, label.length * 7 + 28)
+}
+
+function catPillWidth(label) {
+  return Math.max(110, label.length * 7.7 + 32)
+}
 
 export default function SkillsSector() {
   const canvasRef = useRef(null)
@@ -23,6 +32,42 @@ export default function SkillsSector() {
   const [visible, setVisible] = useState(false)
 
   // ── helpers ──────────────────────────────────────────────────────────────
+
+  // Returns the point on a node's boundary in direction (dx, dy) from its center.
+  // Uses exact stadium (pill) intersection: flat top/bottom sides + semicircular end caps.
+  function edgePoint(node, dx, dy) {
+    const len = Math.hypot(dx, dy)
+    if (len === 0) return { x: node.x, y: node.y }
+    const ux = dx / len
+    const uy = dy / len
+
+    if (node.kind === 'hub') {
+      return { x: node.x + ux * HUB_RADIUS, y: node.y + uy * HUB_RADIUS }
+    }
+
+    const hw = (node.pw || 80) / 2        // half-width
+    const hh = (node.ph || SKILL_PILL_H) / 2  // half-height = cap radius
+    const body = hw - hh                  // x-distance from center to where caps begin
+
+    let t
+    if (Math.abs(uy) < 1e-9) {
+      // Purely horizontal — exits through end cap edge
+      t = hw
+    } else {
+      // Check if ray exits through flat top/bottom side
+      const tSide = hh / Math.abs(uy)
+      const xAtSide = ux * tSide
+      if (Math.abs(xAtSide) <= body) {
+        t = tSide
+      } else {
+        // Exits through the semicircular end cap
+        const cx = Math.sign(ux) * body
+        t = ux * cx + Math.sqrt(hh * hh - cx * cx * uy * uy)
+      }
+    }
+
+    return { x: node.x + ux * t, y: node.y + uy * t }
+  }
 
   function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -52,6 +97,7 @@ export default function SkillsSector() {
   function buildCatNodes(cx, cy) {
     return skillCategories.map((cat, i) => {
       const pos = catFixedPos(i, cx, cy)
+      const pw = catPillWidth(cat.label)
       return {
         id: `cat:${cat.id}`,
         kind: 'cat',
@@ -60,6 +106,9 @@ export default function SkillsSector() {
         color: cat.color,
         skills: cat.skills,
         angle: catAngle(i),
+        pw,
+        ph: CAT_PILL_H,
+        r: pw / 2,
         ...pos,
         x: pos.fx,
         y: pos.fy,
@@ -68,16 +117,22 @@ export default function SkillsSector() {
   }
 
   function buildSkillNodes(catNode) {
-    return catNode.skills.map((skill) => ({
-      id: `skill:${catNode.catId}:${skill}`,
-      kind: 'skill',
-      catId: catNode.catId,
-      label: skill,
-      color: catNode.color,
-      // start at parent position with small jitter
-      x: catNode.x + (Math.random() - 0.5) * 10,
-      y: catNode.y + (Math.random() - 0.5) * 10,
-    }))
+    return catNode.skills.map((skill) => {
+      const pw = skillPillWidth(skill)
+      return {
+        id: `skill:${catNode.catId}:${skill}`,
+        kind: 'skill',
+        catId: catNode.catId,
+        label: skill,
+        color: catNode.color,
+        pw,                      // pill width
+        ph: SKILL_PILL_H,        // pill height
+        r: pw / 2,               // collision radius
+        // start at parent position with small jitter
+        x: catNode.x + (Math.random() - 0.5) * 10,
+        y: catNode.y + (Math.random() - 0.5) * 10,
+      }
+    })
   }
 
   function buildLinks(nodes) {
@@ -102,6 +157,7 @@ export default function SkillsSector() {
     const links = linksRef.current
     const racers = racersRef.current
     const hoverId = hoverRef.current
+    const hoveredNode = hoverId ? nodes.find((n) => n.id === hoverId) : null
 
     // ── Draw edges ──────────────────────────────────────────────────────────
     links.forEach((link) => {
@@ -109,19 +165,50 @@ export default function SkillsSector() {
       const t = link.target
       if (!s || !t) return
 
-      // Determine opacity
-      const isHovered =
-        hoverId === t.id || hoverId === s.id
+      // Highlight the edge if either endpoint is hovered, or if the hovered
+      // skill node's ancestry chain passes through this edge (skill → cat → hub)
+      let isHovered = hoverId === t.id || hoverId === s.id
+      if (!isHovered && hoveredNode?.kind === 'skill') {
+        const parentCatId = `cat:${hoveredNode.catId}`
+        isHovered = link.kind === 'hub-cat' &&
+          (s.id === parentCatId || t.id === parentCatId)
+      }
       const baseAlpha = link.kind === 'hub-cat' ? 0.2 : 0.35
       const alpha = isHovered ? 0.8 : baseAlpha
       const color = link.kind === 'hub-cat' ? '#00FFFF' : (t.color || s.color)
 
+      const dx = t.x - s.x
+      const dy = t.y - s.y
+      const sp = edgePoint(s, dx, dy)
+      const tp = edgePoint(t, -dx, -dy)
+
       ctx.strokeStyle = hexToRgba(color, alpha)
       ctx.lineWidth = isHovered ? 1.5 : 1
       ctx.beginPath()
-      ctx.moveTo(s.x, s.y)
-      ctx.lineTo(t.x, t.y)
+      ctx.moveTo(sp.x, sp.y)
+      ctx.lineTo(tp.x, tp.y)
       ctx.stroke()
+    })
+
+    // ── Draw node background masks (cover any edge that bleeds through) ─────
+    // Drawn after edges so the opaque background hides edge endpoints under nodes
+    nodes.forEach((node) => {
+      if (node.kind === 'cat') {
+        const entry = entryOpacityRef.current[node.catId]
+        if (!entry || entry.startTime === null) return
+      }
+      ctx.fillStyle = '#000913'
+      if (node.kind === 'hub') {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, HUB_RADIUS, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        const pw = node.pw || 80
+        const ph = node.ph || SKILL_PILL_H
+        ctx.beginPath()
+        ctx.roundRect(node.x - pw / 2, node.y - ph / 2, pw, ph, ph / 2)
+        ctx.fill()
+      }
     })
 
     // ── Draw racer pulses ───────────────────────────────────────────────────
@@ -150,46 +237,96 @@ export default function SkillsSector() {
       }
       if (opacity === 0) return
 
-      const radius = node.kind === 'hub' ? HUB_RADIUS : node.kind === 'cat' ? CAT_RADIUS : SKILL_RADIUS
       const color = node.kind === 'hub' ? '#00FFFF' : node.color
 
-      // Fill
-      ctx.globalAlpha = opacity * (node.kind === 'skill' ? 0.85 : 1)
-      ctx.beginPath()
-      ctx.arc(node.x, node.y, radius, 0, Math.PI * 2)
-      ctx.fillStyle = hexToRgba(color, node.kind === 'skill' ? 0.18 : 0.22)
-      ctx.fill()
+      if (node.kind === 'skill') {
+        // ── Pill shape for skill nodes ────────────────────────────────────
+        const pw = node.pw || 60
+        const ph = node.ph || SKILL_PILL_H
+        const cr = ph / 2  // corner radius → full pill ends
 
-      // Border
-      ctx.strokeStyle = isHovered ? color : hexToRgba(color, 0.9)
-      ctx.lineWidth = isHovered ? 2 : 1.5
-      ctx.stroke()
+        ctx.globalAlpha = opacity * 0.85
 
-      // Outer glow ring on hover
-      if (isHovered) {
+        // Fill
         ctx.beginPath()
-        ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2)
-        ctx.strokeStyle = hexToRgba(color, 0.35)
-        ctx.lineWidth = 1.5
+        ctx.roundRect(node.x - pw / 2, node.y - ph / 2, pw, ph, cr)
+        ctx.fillStyle = hexToRgba(color, 0.18)
+        ctx.fill()
+
+        // Border
+        ctx.strokeStyle = isHovered ? color : hexToRgba(color, 0.9)
+        ctx.lineWidth = isHovered ? 2 : 1.5
         ctx.stroke()
-      }
 
-      // Label
-      ctx.globalAlpha = opacity
-      ctx.font = node.kind === 'hub'
-        ? "bold 10px 'Roboto Mono', monospace"
-        : node.kind === 'cat'
-        ? "11px 'Roboto Mono', monospace"
-        : "10px 'Roboto Mono', monospace"
-      ctx.fillStyle = color
-      ctx.textAlign = 'center'
+        // Outer glow ring on hover
+        if (isHovered) {
+          ctx.beginPath()
+          ctx.roundRect(node.x - pw / 2 - 5, node.y - ph / 2 - 5, pw + 10, ph + 10, cr + 5)
+          ctx.strokeStyle = hexToRgba(color, 0.35)
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
 
-      if (node.kind === 'hub') {
-        ctx.fillText('SKILLS', node.x, node.y + 4)
+        // Label centered inside pill
+        ctx.globalAlpha = opacity
+        ctx.font = "10px 'Roboto Mono', monospace"
+        ctx.fillStyle = color
+        ctx.textAlign = 'center'
+        ctx.fillText(node.label, node.x, node.y + 4)
+
       } else if (node.kind === 'cat') {
-        ctx.fillText(node.label, node.x, node.y + radius + 16)
+        // ── Pill for category nodes ───────────────────────────────────────
+        const pw = node.pw || 110
+        const ph = node.ph || CAT_PILL_H
+        const cr = ph / 2
+
+        ctx.globalAlpha = opacity
+        ctx.beginPath()
+        ctx.roundRect(node.x - pw / 2, node.y - ph / 2, pw, ph, cr)
+        ctx.fillStyle = hexToRgba(color, 0.22)
+        ctx.fill()
+
+        ctx.strokeStyle = isHovered ? color : hexToRgba(color, 0.9)
+        ctx.lineWidth = isHovered ? 2 : 1.5
+        ctx.stroke()
+
+        if (isHovered) {
+          ctx.beginPath()
+          ctx.roundRect(node.x - pw / 2 - 5, node.y - ph / 2 - 5, pw + 10, ph + 10, cr + 5)
+          ctx.strokeStyle = hexToRgba(color, 0.35)
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
+
+        ctx.font = "bold 11px 'Roboto Mono', monospace"
+        ctx.fillStyle = color
+        ctx.textAlign = 'center'
+        ctx.fillText(node.label, node.x, node.y + 4)
+
       } else {
-        ctx.fillText(node.label, node.x, node.y + SKILL_RADIUS + 13)
+        // ── Circle for hub node ───────────────────────────────────────────
+        ctx.globalAlpha = opacity
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, HUB_RADIUS, 0, Math.PI * 2)
+        ctx.fillStyle = hexToRgba(color, 0.22)
+        ctx.fill()
+
+        ctx.strokeStyle = isHovered ? color : hexToRgba(color, 0.9)
+        ctx.lineWidth = isHovered ? 2 : 1.5
+        ctx.stroke()
+
+        if (isHovered) {
+          ctx.beginPath()
+          ctx.arc(node.x, node.y, HUB_RADIUS + 6, 0, Math.PI * 2)
+          ctx.strokeStyle = hexToRgba(color, 0.35)
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
+
+        ctx.font = "bold 13px 'Roboto Mono', monospace"
+        ctx.fillStyle = color
+        ctx.textAlign = 'center'
+        ctx.fillText('SKILLS', node.x, node.y + 5)
       }
 
       ctx.globalAlpha = 1
@@ -267,6 +404,19 @@ export default function SkillsSector() {
     }, 420)
   }
 
+  // Custom d3 force: clamp free nodes inside canvas bounds with padding
+  function boundaryForce() {
+    const { w, h } = dimsRef.current
+    const pad = 12
+    for (const node of nodesRef.current) {
+      if (node.fx != null && node.fy != null) continue  // skip fixed nodes
+      const hw = (node.pw || HUB_RADIUS * 2) / 2 + pad
+      const hh = (node.ph || HUB_RADIUS * 2) / 2 + pad
+      node.x = Math.max(hw, Math.min(w - hw, node.x))
+      node.y = Math.max(hh, Math.min(h - hh, node.y))
+    }
+  }
+
   // ── initialization useEffect ──────────────────────────────────────────────
 
   useEffect(() => {
@@ -306,7 +456,8 @@ export default function SkillsSector() {
     const sim = d3.forceSimulation(initialNodes)
       .force('link', d3.forceLink(linksRef.current).id((d) => d.id).distance(90).strength(0.8))
       .force('charge', d3.forceManyBody().strength(-120))
-      .force('collide', d3.forceCollide(30))
+      .force('collide', d3.forceCollide((n) => (n.r || HUB_RADIUS) + 8))
+      .force('boundary', boundaryForce)
       .alphaDecay(0.03)
       .on('tick', () => draw(ctx, w, h))
 
@@ -336,8 +487,9 @@ export default function SkillsSector() {
 
       for (const node of nodesRef.current) {
         if (node.kind !== 'cat') continue
-        const dist = Math.hypot(mx - node.x, my - node.y)
-        if (dist <= CAT_RADIUS + 8) {
+        const hw = (node.pw || 110) / 2 + 6
+        const hh = (node.ph || CAT_PILL_H) / 2 + 6
+        if (Math.abs(mx - node.x) <= hw && Math.abs(my - node.y) <= hh) {
           if (expandedRef.current.has(node.catId)) {
             expandedRef.current.delete(node.catId)
             collapseCategory(node)
@@ -413,11 +565,15 @@ export default function SkillsSector() {
 
       let found = null
       for (const node of nodesRef.current) {
-        const r = node.kind === 'hub' ? HUB_RADIUS : node.kind === 'cat' ? CAT_RADIUS : SKILL_RADIUS
-        if (Math.hypot(mx - node.x, my - node.y) <= r + 8) {
-          found = node.id
-          break
+        let hit = false
+        if (node.kind === 'skill' || node.kind === 'cat') {
+          const hw = (node.pw || 80) / 2 + 6
+          const hh = (node.ph || SKILL_PILL_H) / 2 + 6
+          hit = Math.abs(mx - node.x) <= hw && Math.abs(my - node.y) <= hh
+        } else {
+          hit = Math.hypot(mx - node.x, my - node.y) <= HUB_RADIUS + 8
         }
+        if (hit) { found = node.id; break }
       }
 
       const prev = hoverRef.current

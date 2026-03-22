@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useLayoutEffect } from 'react'
 import gsap from 'gsap'
 import GatewayPane from './GatewayPane'
 import useAppState from '../../store/appState'
@@ -19,22 +19,42 @@ export default function GatewayPanes() {
   const paneRefs = [useRef(), useRef(), useRef()]
   const setActiveSector = useAppState((s) => s.setActiveSector)
   const activeSector = useAppState((s) => s.activeSector)
+  const phase = useAppState((s) => s.phase)
+  const hasRisen = useRef(false)
 
-  // Initial rise animation on mount
-  useEffect(() => {
+  // Snap to underground + invisible before the first paint.
+  // Runs synchronously after React commits, so Three.js never renders the
+  // panes at their final position — eliminates the 1-frame flash.
+  useLayoutEffect(() => {
     paneRefs.forEach((ref) => {
       if (!ref.current) return
       ref.current.position.y = -5
-      gsap.to(ref.current.position, {
-        y: 1.5,
-        duration: 1.5,
-        ease: 'power2.out',
-      })
+      const mesh = ref.current.children[0]
+      const lines = ref.current.children[1]
+      if (mesh?.material) mesh.material.opacity = 0
+      if (lines?.material) lines.material.opacity = 0
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Rise + fade-in animation — fires once when phase reaches 3.
+  // Mounting early (phase >= 2) pre-warms shaders/GPU uploads during the
+  // cinematic so the transition frame itself stays fast.
+  useEffect(() => {
+    if (phase < 3 || hasRisen.current) return
+    hasRisen.current = true
+    paneRefs.forEach((ref) => {
+      if (!ref.current) return
+      gsap.to(ref.current.position, { y: 1.5, duration: 1.5, ease: 'power2.out' })
+      const mesh = ref.current.children[0]
+      const lines = ref.current.children[1]
+      if (mesh?.material) gsap.to(mesh.material, { opacity: 0.82, duration: 1.0 })
+      if (lines?.material) gsap.to(lines.material, { opacity: 0.8, duration: 1.0 })
+    })
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fade panes out when entering a sector, fade back in when returning
   useEffect(() => {
+    if (!hasRisen.current) return
     paneRefs.forEach((ref) => {
       if (!ref.current) return
       const group = ref.current

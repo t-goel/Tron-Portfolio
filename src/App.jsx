@@ -63,7 +63,7 @@ function App() {
     <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
       {showBoot && <BootSequence onComplete={handleBootComplete} />}
       <Canvas
-        frameloop={showBoot ? 'never' : 'always'}
+        frameloop="always"
         camera={{ position: [0, 8, 14], fov: 60 }}
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 2]}
