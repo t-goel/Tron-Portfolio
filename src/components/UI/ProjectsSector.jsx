@@ -75,7 +75,7 @@ export default function ProjectsSector() {
             paddingBottom: 10,
             marginBottom: 4,
             opacity: 0,
-            animation: 'revealRow 0.2s ease-out 0.3s forwards',
+            animation: 'revealRow 0.2s ease-out 0.3s both',
           }}>
             <span>ID / NAME</span>
             <span>STACK / STATUS</span>
@@ -94,7 +94,7 @@ export default function ProjectsSector() {
                   borderBottom: isLast ? 'none' : '1px solid rgba(0,255,255,0.08)',
                   padding: '16px 0',
                   opacity: 0,
-                  animation: `revealRow 0.25s ease-out ${delay} forwards`,
+                  animation: `revealRow 0.25s ease-out ${delay} both`,
                 }}
               >
                 {/* Index line */}
