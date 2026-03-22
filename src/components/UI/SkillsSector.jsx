@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3-force'
 import { skillCategories } from '../../data/skills'
 
@@ -19,6 +19,7 @@ export default function SkillsSector() {
   const entryOpacityRef = useRef({})  // catId -> 0..1
   const dimsRef = useRef({ w: 0, h: 0 })
   const rafRef = useRef(null)
+  const racerLoopRunningRef = useRef(false)
   const [visible, setVisible] = useState(false)
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -217,6 +218,12 @@ export default function SkillsSector() {
     }))
     racersRef.current = [...racersRef.current, ...newRacers]
 
+    // Restart racer loop if not already running
+    if (!racerLoopRunningRef.current) {
+      racerLoopRunningRef.current = true
+      rafRef.current = requestAnimationFrame(tickRacers)
+    }
+
     // Update simulation
     const sim = simRef.current
     sim.nodes(updatedNodes)
@@ -239,6 +246,12 @@ export default function SkillsSector() {
       startTime: performance.now(),
     }))
     racersRef.current = [...racersRef.current, ...reverseRacers]
+
+    // Restart racer loop if not already running
+    if (!racerLoopRunningRef.current) {
+      racerLoopRunningRef.current = true
+      rafRef.current = requestAnimationFrame(tickRacers)
+    }
 
     // After animation completes, remove skill nodes from simulation
     setTimeout(() => {
@@ -343,43 +356,44 @@ export default function SkillsSector() {
 
   // ── racer animation loop ──────────────────────────────────────────────────
 
-  useEffect(() => {
-    let running = true
+  function tickRacers() {
+    const now = performance.now()
+    let changed = false
 
-    function tickRacers() {
-      if (!running) return
-      const now = performance.now()
-      let changed = false
+    racersRef.current = racersRef.current
+      .map((racer) => {
+        const elapsed = now - racer.startTime
+        const t = Math.min(elapsed / racer.duration, 1)
+        // For expand racers: update destination to current skill node position (node is moving)
+        // For collapse racers: skillId is null, destination is fixed
+        let toX = racer.toX
+        let toY = racer.toY
+        if (racer.skillId) {
+          const skillNode = nodesRef.current.find((n) => n.id === racer.skillId)
+          if (skillNode) { toX = skillNode.x; toY = skillNode.y }
+        }
+        changed = true
+        return { ...racer, t, toX, toY }
+      })
+      .filter((r) => r.t < 1)
 
-      racersRef.current = racersRef.current
-        .map((racer) => {
-          const elapsed = now - racer.startTime
-          const t = Math.min(elapsed / racer.duration, 1)
-          // For expand racers: update destination to current skill node position (node is moving)
-          // For collapse racers: skillId is null, destination is fixed
-          let toX = racer.toX
-          let toY = racer.toY
-          if (racer.skillId) {
-            const skillNode = nodesRef.current.find((n) => n.id === racer.skillId)
-            if (skillNode) { toX = skillNode.x; toY = skillNode.y }
-          }
-          changed = true
-          return { ...racer, t, toX, toY }
-        })
-        .filter((r) => r.t < 1)
-
-      if (changed) {
-        const { w, h } = dimsRef.current
-        const ctx = canvasRef.current?.getContext('2d')
-        if (ctx) draw(ctx, w, h)
-      }
-
-      rafRef.current = requestAnimationFrame(tickRacers)
+    if (changed) {
+      const { w, h } = dimsRef.current
+      const ctx = canvasRef.current?.getContext('2d')
+      if (ctx) draw(ctx, w, h)
     }
 
-    rafRef.current = requestAnimationFrame(tickRacers)
+    if (racersRef.current.length > 0) {
+      rafRef.current = requestAnimationFrame(tickRacers)
+    } else {
+      racerLoopRunningRef.current = false
+    }
+  }
+
+  // ── racer animation loop (started on-demand when racers are spawned) ───────
+
+  useEffect(() => {
     return () => {
-      running = false
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [])
