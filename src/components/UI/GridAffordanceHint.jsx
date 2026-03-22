@@ -27,9 +27,9 @@ export default function GridAffordanceHint() {
     <div
       style={{
         position: 'fixed',
-        bottom: '80px',
+        top: '50%',
         left: '50%',
-        transform: 'translateX(-50%)',
+        transform: 'translate(-50%, -50%)',
         zIndex: 25,
         opacity: fadingOut ? 0 : 1,
         transition: 'opacity 0.6s ease',
