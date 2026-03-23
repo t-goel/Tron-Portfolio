@@ -30,9 +30,7 @@ export default function GatewayPanes() {
       if (!ref.current) return
       ref.current.position.y = -5
       const mesh = ref.current.children[0]
-      const lines = ref.current.children[1]
       if (mesh?.material) mesh.material.opacity = 0
-      if (lines?.material) lines.material.opacity = 0
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -46,9 +44,7 @@ export default function GatewayPanes() {
       if (!ref.current) return
       gsap.to(ref.current.position, { y: 1.5, duration: 1.5, ease: 'power2.out' })
       const mesh = ref.current.children[0]
-      const lines = ref.current.children[1]
       if (mesh?.material) gsap.to(mesh.material, { opacity: 0.82, duration: 1.0 })
-      if (lines?.material) gsap.to(lines.material, { opacity: 0.8, duration: 1.0 })
     })
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -58,17 +54,14 @@ export default function GatewayPanes() {
     paneRefs.forEach((ref) => {
       if (!ref.current) return
       const group = ref.current
-      // children[0] = mesh (has material), children[1] = lineSegments (has material)
+      // children[0] = mesh
       const mesh = group.children[0]
-      const lines = group.children[1]
-      if (!mesh || !lines) return
+      if (!mesh) return
 
       if (activeSector) {
         gsap.to(mesh.material, { opacity: 0, duration: 0.5 })
-        gsap.to(lines.material, { opacity: 0, duration: 0.5 })
       } else {
         gsap.to(mesh.material, { opacity: 0.82, duration: 0.5 })
-        gsap.to(lines.material, { opacity: 0.8, duration: 0.5 })
       }
     })
   }, [activeSector]) // eslint-disable-line react-hooks/exhaustive-deps
