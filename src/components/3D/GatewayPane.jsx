@@ -106,7 +106,7 @@ function drawPortalFrame(ctx, label, hoverProgress, breathePhase) {
   ctx.textBaseline = 'alphabetic'
 }
 
-const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onPaneClick }, ref) {
+const GatewayPane = forwardRef(function GatewayPane({ position, label, onPaneClick }, ref) {
   const groupRef = useRef()
   const lastDrawRef = useRef(0)
   const { camera } = useThree()
