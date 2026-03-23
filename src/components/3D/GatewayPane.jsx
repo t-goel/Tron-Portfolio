@@ -2,98 +2,108 @@ import { useRef, useMemo, useEffect, forwardRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
-const CHAR_SET = '0123456789ABCDEF\u2554\u2557\u255A\u255D\u2551\u2550\u2560\u2563\u2566\u2569\u256C01>_/\\'
+function drawPortalFrame(ctx, label, hoverProgress, breathePhase) {
+  const W = 240, H = 160
 
-function drawFrame(ctx, seed, decryptProgress, label) {
-  // Dark semi-transparent background so the teal glass shows through slightly
-  ctx.clearRect(0, 0, 240, 160)
-  ctx.fillStyle = 'rgba(0, 8, 12, 0.92)'
-  ctx.fillRect(0, 0, 240, 160)
+  // 1. Background
+  ctx.clearRect(0, 0, W, H)
+  ctx.fillStyle = '#000810'
+  ctx.fillRect(0, 0, W, H)
 
-  ctx.font = "9px 'Roboto Mono', monospace"
+  // 2. Radial gradient overlay
+  const radialOpacity = 0.7 + 0.25 * hoverProgress
+  const grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.7)
+  grad.addColorStop(0, `rgba(0,50,60,${radialOpacity})`)
+  grad.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, W, H)
 
-  const labelChars = Array.from(label)
-  const totalCols = 30
-  const totalRows = 20
-  const totalCells = totalCols * totalRows
+  // 3. Border with breathing glow
+  const breatheShadow = 18 + 9 * Math.sin((breathePhase / 3) * 2 * Math.PI)
+  const borderBlur = breatheShadow + (40 - breatheShadow) * hoverProgress
+  const borderAlpha = 0.18 + 0.37 * hoverProgress
+  ctx.shadowBlur = borderBlur
+  ctx.shadowColor = 'rgba(0,255,255,0.5)'
+  ctx.strokeStyle = `rgba(0,255,255,${borderAlpha})`
+  ctx.lineWidth = 1
+  ctx.strokeRect(6.5, 6.5, W - 13, H - 13)
+  ctx.shadowBlur = 0
 
-  const labelStartCol = Math.floor((totalCols - labelChars.length) / 2)
-  const labelRow = Math.floor(totalRows / 2)
-
-  const labelCellMap = new Map()
-  for (let i = 0; i < labelChars.length; i++) {
-    const col = labelStartCol + i
-    if (col >= 0 && col < totalCols) {
-      const cellIndex = labelRow * totalCols + col
-      labelCellMap.set(cellIndex, labelChars[i])
-    }
-  }
-
-  for (let row = 0; row < totalRows; row++) {
-    for (let col = 0; col < totalCols; col++) {
-      const cellIndex = row * totalCols + col
-      const x = col * 8 + 1
-      const y = row * 8 + 8
-
-      if (cellIndex / totalCells < decryptProgress) {
-        if (labelCellMap.has(cellIndex)) {
-          ctx.fillStyle = '#00FFFF'
-          ctx.fillText(labelCellMap.get(cellIndex), x, y)
-        }
-        // else blank (revealed zone, non-label)
-      } else {
-        const charIndex = Math.floor((Math.random() + seed * 0.1) * CHAR_SET.length) % CHAR_SET.length
-        const char = CHAR_SET[charIndex]
-        const colorRoll = Math.random()
-        if (colorRoll < 0.5) {
-          ctx.fillStyle = 'rgba(0,255,255,0.85)'
-        } else if (colorRoll < 0.75) {
-          ctx.fillStyle = 'rgba(255,94,0,0.7)'
-        } else {
-          ctx.fillStyle = 'rgba(240,240,240,0.5)'
-        }
-        ctx.fillText(char, x, y)
-      }
-    }
-  }
-
-  // Wireframe lines
-  if (decryptProgress > 0.8) {
-    ctx.strokeStyle = 'rgba(0,255,255,0.35)'
+  // 4 & 5. H-lines (upper at y=48, lower at y=112)
+  const lineAlpha = 0.25 + 0.30 * hoverProgress
+  ;[48, 112].forEach((y) => {
+    const hGrad = ctx.createLinearGradient(40, y, 200, y)
+    hGrad.addColorStop(0, 'rgba(0,255,255,0)')
+    hGrad.addColorStop(0.5, `rgba(0,255,255,${lineAlpha})`)
+    hGrad.addColorStop(1, 'rgba(0,255,255,0)')
+    ctx.strokeStyle = hGrad
     ctx.lineWidth = 1
-    const hLines = [40, 80, 120]
-    const vLines = [60, 120, 180]
-    for (const hy of hLines) {
-      ctx.beginPath(); ctx.moveTo(0, hy); ctx.lineTo(240, hy); ctx.stroke()
-    }
-    for (const vx of vLines) {
-      ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, 160); ctx.stroke()
-    }
-  } else {
-    const lineCount = 3 + Math.floor(Math.random() * 3)
-    ctx.strokeStyle = 'rgba(0,255,255,0.2)'
-    ctx.lineWidth = 1
-    for (let i = 0; i < lineCount; i++) {
-      ctx.beginPath()
-      ctx.moveTo(Math.random() * 240, Math.random() * 160)
-      ctx.lineTo(Math.random() * 240, Math.random() * 160)
-      ctx.stroke()
-    }
+    ctx.beginPath()
+    ctx.moveTo(40, y)
+    ctx.lineTo(200, y)
+    ctx.stroke()
+  })
+
+  // 6. Label
+  const labelBlur = 30 + 30 * hoverProgress
+  ctx.shadowBlur = labelBlur
+  ctx.shadowColor = 'rgba(0,255,255,0.6)'
+  ctx.fillStyle = '#ffffff'
+  ctx.font = "600 16px 'Roboto Mono', monospace"
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(label.replace('>_ ', ''), W / 2, 85)
+  ctx.shadowBlur = 0
+
+  // 7. Subtitle crossfade
+  ctx.font = "7px 'Roboto Mono', monospace"
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  if (hoverProgress < 0.5) {
+    const a = 0.20 * (1 - hoverProgress * 2)
+    ctx.fillStyle = `rgba(0,255,255,${a})`
+    ctx.fillText('GATEWAY ACCESS POINT', W / 2, 148)
+  }
+  if (hoverProgress > 0.5) {
+    const a = 0.85 * ((hoverProgress - 0.5) * 2)
+    ctx.fillStyle = `rgba(255,94,0,${a})`
+    ctx.fillText('[ ENTER SECTOR ]', W / 2, 148)
   }
 
-  // Idle-only faint label: shown only when decryptProgress is zero so the
-  // pane is always identifiable at rest. Once a hover begins the cell-loop
-  // above takes over and renders the label as part of the reveal animation,
-  // so this block must not run in parallel with that path.
-  if (decryptProgress === 0) {
-    ctx.font = "18px 'TR2N', sans-serif"
-    ctx.fillStyle = 'rgba(0,255,255,0.75)'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, 120, 80)
-    ctx.textAlign = 'left'
+  // 8. Corner brackets (only when hovering)
+  if (hoverProgress > 0) {
+    const co = -4 + 8 * hoverProgress   // slides from off-canvas to 4px inset
+    const arm = 16
+    const cornerOpacity = hoverProgress
+    ctx.shadowBlur = 12
+    ctx.shadowColor = '#00FFFF'
+    ctx.strokeStyle = `rgba(0,255,255,${cornerOpacity})`
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    // Top-left
+    ctx.moveTo(co, co + arm); ctx.lineTo(co, co); ctx.lineTo(co + arm, co)
+    // Top-right
+    ctx.moveTo(W - co, co + arm); ctx.lineTo(W - co, co); ctx.lineTo(W - co - arm, co)
+    // Bottom-left
+    ctx.moveTo(co, H - co - arm); ctx.lineTo(co, H - co); ctx.lineTo(co + arm, H - co)
+    // Bottom-right
+    ctx.moveTo(W - co, H - co - arm); ctx.lineTo(W - co, H - co); ctx.lineTo(W - co - arm, H - co)
+    ctx.stroke()
+    ctx.shadowBlur = 0
+  }
+
+  // 9. Top-right tag (only when hovering)
+  if (hoverProgress > 0) {
+    ctx.font = "6px 'Roboto Mono', monospace"
+    ctx.textAlign = 'right'
     ctx.textBaseline = 'alphabetic'
+    ctx.fillStyle = `rgba(0,255,255,${0.45 * hoverProgress})`
+    ctx.fillText('SECTOR READY', 200, 20)
   }
+
+  // Reset text alignment for safety
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
 }
 
 const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onPaneClick }, ref) {
@@ -125,10 +135,10 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onP
     const texture = new THREE.CanvasTexture(canvas)
     // Draw initial frame
     const ctx = canvas.getContext('2d')
-    drawFrame(ctx, seed, 0, label)
+    drawPortalFrame(ctx, label, 0, 0)
     texture.needsUpdate = true
     return { canvas, texture }
-  }, [seed, label])
+  }, [label])
 
   // Dispose texture on unmount
   useEffect(() => {
@@ -136,11 +146,6 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onP
       texture.dispose()
     }
   }, [texture])
-
-  const edgesGeo = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.PlaneGeometry(5, 3.5)),
-    []
-  )
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
@@ -156,7 +161,7 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onP
     // Decrypt progress update
     const d = decryptRef.current
     if (d.direction !== 0) {
-      const speed = d.direction > 0 ? delta / 1.2 : delta / 0.6
+      const speed = d.direction > 0 ? delta / 0.3 : delta / 0.6
       d.progress = Math.max(0, Math.min(1, d.progress + d.direction * speed))
       if (d.progress <= 0 || d.progress >= 1) d.direction = 0
     }
@@ -181,13 +186,13 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onP
     if (isAnimating) {
       // Draw every frame during decrypt animation for smooth reveal
       const ctx = canvas.getContext('2d')
-      drawFrame(ctx, seed, d.progress, label)
+      drawPortalFrame(ctx, label, d.progress, state.clock.elapsedTime)
       texture.needsUpdate = true
       lastDrawRef.current = elapsed
     } else if (elapsed - lastDrawRef.current > 0.125) {
       // Idle throttle: ~8fps
       const ctx = canvas.getContext('2d')
-      drawFrame(ctx, seed, d.progress, label)
+      drawPortalFrame(ctx, label, d.progress, state.clock.elapsedTime)
       texture.needsUpdate = true
       lastDrawRef.current = elapsed
     }
@@ -229,9 +234,6 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, seed, onP
             depthWrite={false}
           />
         </mesh>
-        <lineSegments geometry={edgesGeo}>
-          <lineBasicMaterial color="#00FFFF" transparent opacity={0.8} toneMapped={false} />
-        </lineSegments>
       </group>
       <mesh
         ref={ringRef}
