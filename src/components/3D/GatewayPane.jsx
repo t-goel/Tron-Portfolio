@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, forwardRef } from 'react'
+import { useRef, useMemo, useEffect, useLayoutEffect, forwardRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -116,8 +116,10 @@ const GatewayPane = forwardRef(function GatewayPane({ position, label, onPaneCli
   const ringRef = useRef()
   const ringStateRef = useRef({ active: false, progress: 0 })
 
-  // Expose groupRef via forwarded ref
-  useEffect(() => {
+  // Expose groupRef via forwarded ref — must be useLayoutEffect so that
+  // GatewayPanes' useLayoutEffect (which hides panes before first paint) can
+  // access ref.current. React fires child useLayoutEffects before parent ones.
+  useLayoutEffect(() => {
     if (ref) {
       if (typeof ref === 'function') {
         ref(groupRef.current)
