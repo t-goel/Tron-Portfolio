@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { playWithFade, initAudio } from '../../utils/audioManager'
 import useAppState from '../../store/appState'
 
@@ -14,7 +14,6 @@ const BOOT_LINES = [
 
 export default function BootSequence({ onComplete }) {
   const setPhase = useAppState((s) => s.setPhase)
-  const [fadingOut, setFadingOut] = useState(false)
   const audioInitialized = useRef(false)
 
   useEffect(() => {
@@ -33,16 +32,13 @@ export default function BootSequence({ onComplete }) {
       setPhase(2)
     }, 800)
 
-    const t2 = setTimeout(() => setFadingOut(true), 2500)
-
-    const t3 = setTimeout(() => {
+    const t2 = setTimeout(() => {
       if (onComplete) onComplete()
-    }, 3000)
+    }, 2500)
 
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
-      clearTimeout(t3)
     }
   }, [onComplete, setPhase])
 
@@ -51,8 +47,6 @@ export default function BootSequence({ onComplete }) {
       className="fixed inset-0 z-50"
       style={{
         background: '#000',
-        opacity: fadingOut ? 0 : 1,
-        transition: 'opacity 0.5s ease',
       }}
       aria-hidden="true"
     >
