@@ -5,15 +5,7 @@ import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
 
 const MODEL_PATH = '/models/tron_uprising_-_argoncity_light_cycle/scene.gltf'
-const SPEED = 6 // units per second
-
-// Rotation Y for each direction (bike model's forward is -Z at Math.PI)
-const DIR_ROT = {
-  ArrowUp:    Math.PI,
-  ArrowDown:  0,
-  ArrowLeft:  Math.PI / 2,
-  ArrowRight: -Math.PI / 2,
-}
+const SPEED = 12  // units per second
 
 function cloneScene(source) {
   const clone = SkeletonUtils.clone(source)
@@ -62,6 +54,7 @@ export default function LightCycles() {
   const org       = useRef({})
   const playerGrp = useRef()
   const keys      = useRef(new Set())
+  const lastTurn  = useRef({ left: false, right: false })
 
   useEffect(() => {
     applyGlow(playerScene, '#00FFFF', 2)
@@ -75,7 +68,7 @@ export default function LightCycles() {
 
   useEffect(() => {
     const onDown = (e) => {
-      if (DIR_ROT[e.key] !== undefined) e.preventDefault()
+      if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault()
       keys.current.add(e.key)
     }
     const onUp = (e) => keys.current.delete(e.key)
@@ -107,16 +100,22 @@ export default function LightCycles() {
     if (o.rear)   o.rear.rotation.x   += rs
     if (o.engine) o.engine.rotation.x += rs
 
-    // Player movement
+    // Player movement — always moving forward, left/right snap 90°
     const grp = playerGrp.current
     if (!grp) return
     const k = keys.current
-    const d = SPEED * delta
+    const lt = lastTurn.current
 
-    if (k.has('ArrowUp'))    { grp.position.z -= d; grp.rotation.y = DIR_ROT.ArrowUp }
-    if (k.has('ArrowDown'))  { grp.position.z += d; grp.rotation.y = DIR_ROT.ArrowDown }
-    if (k.has('ArrowLeft'))  { grp.position.x -= d; grp.rotation.y = DIR_ROT.ArrowLeft }
-    if (k.has('ArrowRight')) { grp.position.x += d; grp.rotation.y = DIR_ROT.ArrowRight }
+    // Snap-turn on key press (not hold)
+    if (k.has('ArrowLeft') && !lt.left)   { grp.rotation.y += Math.PI / 2; lt.left = true }
+    if (k.has('ArrowRight') && !lt.right) { grp.rotation.y -= Math.PI / 2; lt.right = true }
+    if (!k.has('ArrowLeft'))  lt.left = false
+    if (!k.has('ArrowRight')) lt.right = false
+
+    // Constant forward movement in the direction the bike is facing
+    const d = SPEED * delta
+    grp.position.x += Math.sin(grp.rotation.y) * d
+    grp.position.z += Math.cos(grp.rotation.y) * d
   })
 
   return (
