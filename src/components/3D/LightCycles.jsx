@@ -5,10 +5,18 @@ import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
 
 const MODEL_PATH = '/models/tron_uprising_-_argoncity_light_cycle/scene.gltf'
+const SPEED = 6 // units per second
+
+// Rotation Y for each direction (bike model's forward is -Z at Math.PI)
+const DIR_ROT = {
+  ArrowUp:    Math.PI,
+  ArrowDown:  0,
+  ArrowLeft:  Math.PI / 2,
+  ArrowRight: -Math.PI / 2,
+}
 
 function cloneScene(source) {
   const clone = SkeletonUtils.clone(source)
-  // Give each clone its own material instances so colors don't bleed across bikes
   clone.traverse((obj) => {
     if (!obj.isMesh) return
     obj.material = Array.isArray(obj.material)
@@ -49,9 +57,11 @@ export default function LightCycles() {
   const redScene    = useMemo(() => cloneScene(scene), [scene])
   const orgScene    = useMemo(() => cloneScene(scene), [scene])
 
-  const player = useRef({})
-  const red    = useRef({})
-  const org    = useRef({})
+  const player    = useRef({})
+  const red       = useRef({})
+  const org       = useRef({})
+  const playerGrp = useRef()
+  const keys      = useRef(new Set())
 
   useEffect(() => {
     applyGlow(playerScene, '#00FFFF', 2)
@@ -63,10 +73,25 @@ export default function LightCycles() {
     org.current    = getTires(orgScene)
   }, [playerScene, redScene, orgScene])
 
+  useEffect(() => {
+    const onDown = (e) => {
+      if (DIR_ROT[e.key] !== undefined) e.preventDefault()
+      keys.current.add(e.key)
+    }
+    const onUp = (e) => keys.current.delete(e.key)
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup',   onUp)
+    return () => {
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup',   onUp)
+    }
+  }, [])
+
   useFrame((_, delta) => {
     const fs = 12 * delta
     const rs =  9 * delta
 
+    // Wheel spin — all three bikes
     const p = player.current
     if (p.front)  p.front.rotation.x  -= fs
     if (p.rear)   p.rear.rotation.x   += rs
@@ -81,13 +106,26 @@ export default function LightCycles() {
     if (o.front)  o.front.rotation.x  -= fs
     if (o.rear)   o.rear.rotation.x   += rs
     if (o.engine) o.engine.rotation.x += rs
+
+    // Player movement
+    const grp = playerGrp.current
+    if (!grp) return
+    const k = keys.current
+    const d = SPEED * delta
+
+    if (k.has('ArrowUp'))    { grp.position.z -= d; grp.rotation.y = DIR_ROT.ArrowUp }
+    if (k.has('ArrowDown'))  { grp.position.z += d; grp.rotation.y = DIR_ROT.ArrowDown }
+    if (k.has('ArrowLeft'))  { grp.position.x -= d; grp.rotation.y = DIR_ROT.ArrowLeft }
+    if (k.has('ArrowRight')) { grp.position.x += d; grp.rotation.y = DIR_ROT.ArrowRight }
   })
 
   return (
     <>
-      <primitive object={playerScene} position={[0,  -3, 0]} rotation={[0, Math.PI, 0]} scale={1} />
-      <primitive object={redScene}    position={[-3, -3, -8]} rotation={[0, 0, 0]} scale={1} />
-      <primitive object={orgScene}    position={[3,  -3, -8]} rotation={[0, 0, 0]} scale={1} />
+      <group ref={playerGrp} position={[0, -3, 0]} rotation={[0, Math.PI, 0]}>
+        <primitive object={playerScene} />
+      </group>
+      <primitive object={redScene} position={[-3, -3, -8]} rotation={[0, 0, 0]} scale={1} />
+      <primitive object={orgScene} position={[3,  -3, -8]} rotation={[0, 0, 0]} scale={1} />
     </>
   )
 }
