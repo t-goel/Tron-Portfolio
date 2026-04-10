@@ -22,7 +22,6 @@ const BASE_TOP  = 0.5
 const ROW1_CY   = BASE_TOP + PANEL_H / 2
 const ROW1_TOP  = BASE_TOP + PANEL_H
 const ROW2_CY   = ROW1_TOP + PANEL_GAP + PANEL_H / 2
-const WALL_TOP    = WALL_H
 const CAP_STRIP_Y = WALL_H - 1      // 7.0 — top panel row upper edge
 const CAP_TOP_Y   = WALL_H - GLOW_H // ~7.93 — very top edge of wall
 
