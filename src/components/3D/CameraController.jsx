@@ -1,55 +1,59 @@
-import { useEffect, useRef } from 'react'
-import { useThree } from '@react-three/fiber'
-import gsap from 'gsap'
+import { useRef } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
 import useAppState from '../../store/appState'
 
-const SECTOR_CAMERAS = {
-  projects: { position: [0, 4, -10], lookAt: [0, 1, -12] },
-  about:    { position: [-6.93, 4, 2], lookAt: [-6.93, 1, 0] },
-  skills:   { position: [6.93, 4, 2],  lookAt: [6.93, 1, 0] },
-}
+// Chase camera config
+const CAM_HEIGHT   = 5    // height above the bike
+const CAM_DISTANCE = 8    // distance behind the bike
+const CAM_LERP     = 0.08 // smoothing factor (0 = no move, 1 = instant snap)
+const LOOK_AHEAD   = 3    // how far ahead of the bike to look
 
-const HOME_POSITION = [0, 8, 14]
+const _camTarget = new THREE.Vector3()
+const _lookTarget = new THREE.Vector3()
 
 export default function CameraController() {
   const { camera } = useThree()
-  const tweenRef = useRef(null)
-  const activeSector = useAppState((s) => s.activeSector)
-  const setTransitioning = useAppState((s) => s.setTransitioning)
+  const initialized = useRef(false)
 
-  useEffect(() => {
-    // Kill any existing tween to prevent conflicts
-    if (tweenRef.current) tweenRef.current.kill()
+  useFrame(() => {
+    const playerRef = useAppState.getState().playerRef
+    if (!playerRef) return
 
-    if (activeSector) {
-      const target = SECTOR_CAMERAS[activeSector]
-      if (!target) return
-      setTransitioning(true)
-      tweenRef.current = gsap.to(camera.position, {
-        x: target.position[0],
-        y: target.position[1],
-        z: target.position[2],
-        duration: 1.0,
-        ease: 'power2.inOut',
-        onComplete: () => setTransitioning(false),
-      })
+    const px = playerRef.position.x
+    const py = playerRef.position.y
+    const pz = playerRef.position.z
+    const rot = playerRef.rotation.y
+
+    // Forward direction the bike is facing
+    const fwdX = Math.sin(rot)
+    const fwdZ = Math.cos(rot)
+
+    // Desired camera position: behind and above the bike
+    _camTarget.set(
+      px - fwdX * CAM_DISTANCE,
+      py + CAM_HEIGHT,
+      pz - fwdZ * CAM_DISTANCE
+    )
+
+    // Look-at point: slightly ahead of the bike
+    _lookTarget.set(
+      px + fwdX * LOOK_AHEAD,
+      py + 1,
+      pz + fwdZ * LOOK_AHEAD
+    )
+
+    if (!initialized.current) {
+      // Snap on first frame
+      camera.position.copy(_camTarget)
+      initialized.current = true
     } else {
-      // Return to home
-      setTransitioning(true)
-      tweenRef.current = gsap.to(camera.position, {
-        x: HOME_POSITION[0],
-        y: HOME_POSITION[1],
-        z: HOME_POSITION[2],
-        duration: 1.0,
-        ease: 'power2.inOut',
-        onComplete: () => setTransitioning(false),
-      })
+      // Smooth follow
+      camera.position.lerp(_camTarget, CAM_LERP)
     }
 
-    return () => {
-      if (tweenRef.current) tweenRef.current.kill()
-    }
-  }, [activeSector]) // eslint-disable-line react-hooks/exhaustive-deps
+    camera.lookAt(_lookTarget)
+  })
 
   return null
 }

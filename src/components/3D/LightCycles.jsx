@@ -3,6 +3,7 @@ import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
+import useAppState from '../../store/appState'
 
 const MODEL_PATH = '/models/tron_uprising_-_argoncity_light_cycle/scene.gltf'
 const SPEED        = 10    // units per second
@@ -60,6 +61,16 @@ export default function LightCycles() {
   const lastTurn    = useRef({ left: false, right: false })
   const trailPoints = useRef([])  // array of {x, z} positions
   const trailRef    = useRef()    // ref to trail mesh
+
+  // Callback ref to register player group in Zustand immediately on mount
+  const playerGrpCallback = (node) => {
+    playerGrp.current = node
+    if (node) {
+      useAppState.getState().setPlayerRef(node)
+    } else {
+      useAppState.getState().setPlayerRef(null)
+    }
+  }
 
   // Create trail geometry + material once
   const trailGeo = useMemo(() => new THREE.BufferGeometry(), [])
@@ -213,7 +224,7 @@ export default function LightCycles() {
 
   return (
     <>
-      <group ref={playerGrp} position={[0, -3, 0]} rotation={[0, Math.PI, 0]}>
+      <group ref={playerGrpCallback} position={[0, -3, 0]} rotation={[0, Math.PI, 0]}>
         <primitive object={playerScene} />
       </group>
       <mesh ref={trailRef} geometry={trailGeo} material={trailMat} />

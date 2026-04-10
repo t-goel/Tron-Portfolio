@@ -1,6 +1,5 @@
 // src/components/Scene.jsx
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
-import { OrbitControls } from '@react-three/drei'
 import useAppState from '../store/appState'
 import GridFloor from './3D/GridFloor'
 import LightCycles from './3D/LightCycles'
@@ -28,18 +27,6 @@ export default function Scene({ mainVisible }) {
       {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
       {phase >= 3 && <LightCycles />}
-
-      {phase >= 3 && !isMobile && (
-        <OrbitControls
-          enablePan
-          maxPolarAngle={Math.PI / 1.5}
-          minDistance={2}
-          maxDistance={40}
-          enableDamping
-          dampingFactor={0.05}
-          target={[0, 1, 0]}
-        />
-      )}
 
       <EffectComposer>
         <Bloom

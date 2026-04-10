@@ -23,6 +23,10 @@ const useAppState = create(
       // Camera transition flag — prevents double-fire during GSAP lerp
       transitioning: false,
       setTransitioning: (v) => set({ transitioning: v }),
+
+      // Player group ref — shared between LightCycles and CameraController
+      playerRef: null,
+      setPlayerRef: (ref) => set({ playerRef: ref }),
     }),
     {
       name: 'tron-app-state',
