@@ -5,9 +5,9 @@ import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
 
 const MODEL_PATH = '/models/tron_uprising_-_argoncity_light_cycle/scene.gltf'
-const SPEED        = 12   // units per second
+const SPEED        = 10    // units per second
 const TRAIL_WIDTH  = 0.05 // half-width of the trail
-const TRAIL_HEIGHT = 0.5  // height of the trail wall
+const TRAIL_HEIGHT = 0.758 // height of the trail wall
 const MAX_TRAIL    = 600  // max trail segments
 
 function cloneScene(source) {
@@ -66,7 +66,7 @@ export default function LightCycles() {
   const trailMat = useMemo(() => new THREE.MeshBasicMaterial({
     color: '#00FFFF',
     transparent: true,
-    opacity: 0.6,
+    opacity: 0.45,
     side: THREE.DoubleSide,
     toneMapped: false,
     depthWrite: false,
@@ -123,6 +123,15 @@ export default function LightCycles() {
     const lt = lastTurn.current
 
     // Snap-turn on key press (not hold)
+    const turning = (k.has('ArrowLeft') && !lt.left) || (k.has('ArrowRight') && !lt.right)
+    if (turning) {
+      // Insert a corner point BEFORE the rotation so the trail makes a clean 90° turn
+      const pts = trailPoints.current
+      const rot = grp.rotation.y
+      const perpX = Math.cos(rot)
+      const perpZ = -Math.sin(rot)
+      pts.push({ x: grp.position.x, z: grp.position.z, perpX, perpZ })
+    }
     if (k.has('ArrowLeft') && !lt.left)   { grp.rotation.y += Math.PI / 2; lt.left = true }
     if (k.has('ArrowRight') && !lt.right) { grp.rotation.y -= Math.PI / 2; lt.right = true }
     if (!k.has('ArrowLeft'))  lt.left = false
@@ -133,27 +142,27 @@ export default function LightCycles() {
     grp.position.x += Math.sin(grp.rotation.y) * d
     grp.position.z += Math.cos(grp.rotation.y) * d
 
-    // Update light trail
-    const pts = trailPoints.current
-    const px = grp.position.x
-    const pz = grp.position.z
-    const rot = grp.rotation.y
-    // Perpendicular to travel direction (right-hand side)
-    const perpX = Math.cos(rot)
-    const perpZ = -Math.sin(rot)
-    pts.push({ x: px, z: pz, perpX, perpZ })
-    if (pts.length > MAX_TRAIL) pts.shift()
+    // Update light trail — record at group center for clean 90° corners
+    {
+      const rot = grp.rotation.y
+      const perpX = Math.cos(rot)
+      const perpZ = -Math.sin(rot)
+      trailPoints.current.push({ x: grp.position.x, z: grp.position.z, perpX, perpZ })
+    }
+    if (trailPoints.current.length > MAX_TRAIL) trailPoints.current.shift()
 
-    if (pts.length >= 2) {
-      const segCount = pts.length - 1
+    // Render trail
+    const allPts = trailPoints.current
+    if (allPts.length >= 2) {
+      const segCount = allPts.length - 1
       // 4 faces per segment (top, bottom, left wall, right wall), 2 tris each = 8 tris = 24 verts
       const verts = new Float32Array(segCount * 24 * 3)
       const baseY = grp.position.y + 0.01
       const topY  = baseY + TRAIL_HEIGHT
 
       for (let i = 0; i < segCount; i++) {
-        const a = pts[i]
-        const b = pts[i + 1]
+        const a = allPts[i]
+        const b = allPts[i + 1]
         const vi = i * 72 // 24 verts * 3 components
 
         // 4 corners at point a
