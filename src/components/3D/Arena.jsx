@@ -1,6 +1,6 @@
 // src/components/3D/Arena.jsx
 
-const ARENA_HALF = 25
+const ARENA_HALF = 45
 const FLOOR_Y    = -3
 const WALL_H     = 8
 const WALL_THICK = 1

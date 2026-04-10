@@ -4,8 +4,8 @@ import * as THREE from 'three'
 import useAppState from '../../store/appState'
 
 // Chase camera config
-const CAM_HEIGHT = 5    // height above the bike
-const CAM_DISTANCE = 8    // distance behind the bike
+const CAM_HEIGHT = 10   // height above the bike
+const CAM_DISTANCE = 14   // distance behind the bike
 const CAM_LERP = 0.08 // smoothing factor (0 = no move, 1 = instant snap)
 const LOOK_AHEAD = 3    // how far ahead of the bike to look
 
