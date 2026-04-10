@@ -3,6 +3,7 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import { OrbitControls } from '@react-three/drei'
 import useAppState from '../store/appState'
 import GridFloor from './3D/GridFloor'
+import LightCycles from './3D/LightCycles'
 import CameraController from './3D/CameraController'
 import NameBackdrop from './3D/NameBackdrop'
 import CinematicIntro from './3D/CinematicIntro'
@@ -26,6 +27,7 @@ export default function Scene({ mainVisible }) {
       {phase >= 3 && <CameraController />}
       {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
+      {phase >= 3 && <LightCycles />}
 
       {phase >= 3 && !isMobile && (
         <OrbitControls
