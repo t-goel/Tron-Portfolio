@@ -31,10 +31,10 @@ export default function Scene({ mainVisible }) {
 
       {phase >= 3 && !isMobile && (
         <OrbitControls
-          enablePan={false}
-          maxPolarAngle={Math.PI / 2.1}
-          minDistance={6}
-          maxDistance={22}
+          enablePan
+          maxPolarAngle={Math.PI / 1.5}
+          minDistance={2}
+          maxDistance={40}
           enableDamping
           dampingFactor={0.05}
           target={[0, 1, 0]}

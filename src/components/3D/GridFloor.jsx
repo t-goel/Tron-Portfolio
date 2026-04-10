@@ -4,7 +4,7 @@ import * as THREE from 'three'
 export default function GridFloor() {
   return (
     <Grid
-      position={[0, -3, 0]}
+      position={[2.5, -3, 2.5]}
       args={[10, 10]}
       cellSize={1}
       cellThickness={0.4}
