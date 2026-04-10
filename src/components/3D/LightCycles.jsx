@@ -6,15 +6,16 @@ import * as THREE from 'three'
 import useAppState from '../../store/appState'
 
 const MODEL_PATH = '/models/tron_uprising_-_argoncity_light_cycle/scene.gltf'
-const SPEED        = 10    // units per second
-const TRAIL_WIDTH  = 0.05 // half-width of the trail
+const SPEED = 10    // units per second
+const TRAIL_WIDTH = 0.05 // half-width of the trail
 const TRAIL_HEIGHT = 0.758 // height of the trail wall
-const MAX_TRAIL    = 600  // max trail segments
+const MAX_TRAIL = 600  // max trail segments
 
 function cloneScene(source) {
   const clone = SkeletonUtils.clone(source)
   clone.traverse((obj) => {
     if (!obj.isMesh) return
+    obj.frustumCulled = false
     obj.material = Array.isArray(obj.material)
       ? obj.material.map((m) => m.clone())
       : obj.material.clone()
@@ -39,8 +40,8 @@ function applyGlow(scene, hexColor, intensity = 2) {
 function getTires(scene) {
   const t = {}
   scene.traverse((obj) => {
-    if (obj.name === 'Front_Tire_02')  t.front  = obj
-    if (obj.name === 'Rear_Tire_04')   t.rear   = obj
+    if (obj.name === 'Front_Tire_02') t.front = obj
+    if (obj.name === 'Rear_Tire_04') t.rear = obj
     if (obj.name === 'Rear_Engine_03') t.engine = obj
   })
   return t
@@ -50,17 +51,17 @@ export default function LightCycles() {
   const { scene } = useGLTF(MODEL_PATH)
 
   const playerScene = useMemo(() => cloneScene(scene), [scene])
-  const redScene    = useMemo(() => cloneScene(scene), [scene])
-  const orgScene    = useMemo(() => cloneScene(scene), [scene])
+  const redScene = useMemo(() => cloneScene(scene), [scene])
+  const orgScene = useMemo(() => cloneScene(scene), [scene])
 
-  const player    = useRef({})
-  const red       = useRef({})
-  const org       = useRef({})
-  const playerGrp  = useRef()
-  const keys        = useRef(new Set())
-  const lastTurn    = useRef({ left: false, right: false })
+  const player = useRef({})
+  const red = useRef({})
+  const org = useRef({})
+  const playerGrp = useRef()
+  const keys = useRef(new Set())
+  const lastTurn = useRef({ left: false, right: false })
   const trailPoints = useRef([])  // array of {x, z} positions
-  const trailRef    = useRef()    // ref to trail mesh
+  const trailRef = useRef()    // ref to trail mesh
 
   // Callback ref to register player group in Zustand immediately on mount
   const playerGrpCallback = (node) => {
@@ -85,12 +86,12 @@ export default function LightCycles() {
 
   useEffect(() => {
     applyGlow(playerScene, '#00FFFF', 2)
-    applyGlow(redScene,    '#FF0000', 3)
-    applyGlow(orgScene,    '#FF5E00', 3)
+    applyGlow(redScene, '#FF0000', 3)
+    applyGlow(orgScene, '#FF5E00', 3)
 
     player.current = getTires(playerScene)
-    red.current    = getTires(redScene)
-    org.current    = getTires(orgScene)
+    red.current = getTires(redScene)
+    org.current = getTires(orgScene)
   }, [playerScene, redScene, orgScene])
 
   useEffect(() => {
@@ -100,31 +101,31 @@ export default function LightCycles() {
     }
     const onUp = (e) => keys.current.delete(e.key)
     window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup',   onUp)
+    window.addEventListener('keyup', onUp)
     return () => {
       window.removeEventListener('keydown', onDown)
-      window.removeEventListener('keyup',   onUp)
+      window.removeEventListener('keyup', onUp)
     }
   }, [])
 
   useFrame((_, delta) => {
     const fs = 12 * delta
-    const rs =  9 * delta
+    const rs = 9 * delta
 
     // Wheel spin — all three bikes
     const p = player.current
-    if (p.front)  p.front.rotation.x  -= fs
-    if (p.rear)   p.rear.rotation.x   += rs
+    if (p.front) p.front.rotation.x -= fs
+    if (p.rear) p.rear.rotation.x += rs
     if (p.engine) p.engine.rotation.x += rs
 
     const r = red.current
-    if (r.front)  r.front.rotation.x  -= fs
-    if (r.rear)   r.rear.rotation.x   += rs
+    if (r.front) r.front.rotation.x -= fs
+    if (r.rear) r.rear.rotation.x += rs
     if (r.engine) r.engine.rotation.x += rs
 
     const o = org.current
-    if (o.front)  o.front.rotation.x  -= fs
-    if (o.rear)   o.rear.rotation.x   += rs
+    if (o.front) o.front.rotation.x -= fs
+    if (o.rear) o.rear.rotation.x += rs
     if (o.engine) o.engine.rotation.x += rs
 
     // Player movement — always moving forward, left/right snap 90°
@@ -143,9 +144,9 @@ export default function LightCycles() {
       const perpZ = -Math.sin(rot)
       pts.push({ x: grp.position.x, z: grp.position.z, perpX, perpZ })
     }
-    if (k.has('ArrowLeft') && !lt.left)   { grp.rotation.y += Math.PI / 2; lt.left = true }
+    if (k.has('ArrowLeft') && !lt.left) { grp.rotation.y += Math.PI / 2; lt.left = true }
     if (k.has('ArrowRight') && !lt.right) { grp.rotation.y -= Math.PI / 2; lt.right = true }
-    if (!k.has('ArrowLeft'))  lt.left = false
+    if (!k.has('ArrowLeft')) lt.left = false
     if (!k.has('ArrowRight')) lt.right = false
 
     // Constant forward movement in the direction the bike is facing
@@ -169,7 +170,7 @@ export default function LightCycles() {
       // 4 faces per segment (top, bottom, left wall, right wall), 2 tris each = 8 tris = 24 verts
       const verts = new Float32Array(segCount * 24 * 3)
       const baseY = grp.position.y + 0.01
-      const topY  = baseY + TRAIL_HEIGHT
+      const topY = baseY + TRAIL_HEIGHT
 
       for (let i = 0; i < segCount; i++) {
         const a = allPts[i]
@@ -185,36 +186,36 @@ export default function LightCycles() {
 
         let v = vi
         // Top face
-        verts[v]=alx; verts[v+1]=topY; verts[v+2]=alz; v+=3
-        verts[v]=blx; verts[v+1]=topY; verts[v+2]=blz; v+=3
-        verts[v]=brx; verts[v+1]=topY; verts[v+2]=brz; v+=3
-        verts[v]=alx; verts[v+1]=topY; verts[v+2]=alz; v+=3
-        verts[v]=brx; verts[v+1]=topY; verts[v+2]=brz; v+=3
-        verts[v]=arx; verts[v+1]=topY; verts[v+2]=arz; v+=3
+        verts[v] = alx; verts[v + 1] = topY; verts[v + 2] = alz; v += 3
+        verts[v] = blx; verts[v + 1] = topY; verts[v + 2] = blz; v += 3
+        verts[v] = brx; verts[v + 1] = topY; verts[v + 2] = brz; v += 3
+        verts[v] = alx; verts[v + 1] = topY; verts[v + 2] = alz; v += 3
+        verts[v] = brx; verts[v + 1] = topY; verts[v + 2] = brz; v += 3
+        verts[v] = arx; verts[v + 1] = topY; verts[v + 2] = arz; v += 3
 
         // Bottom face
-        verts[v]=alx; verts[v+1]=baseY; verts[v+2]=alz; v+=3
-        verts[v]=brx; verts[v+1]=baseY; verts[v+2]=brz; v+=3
-        verts[v]=blx; verts[v+1]=baseY; verts[v+2]=blz; v+=3
-        verts[v]=alx; verts[v+1]=baseY; verts[v+2]=alz; v+=3
-        verts[v]=arx; verts[v+1]=baseY; verts[v+2]=arz; v+=3
-        verts[v]=brx; verts[v+1]=baseY; verts[v+2]=brz; v+=3
+        verts[v] = alx; verts[v + 1] = baseY; verts[v + 2] = alz; v += 3
+        verts[v] = brx; verts[v + 1] = baseY; verts[v + 2] = brz; v += 3
+        verts[v] = blx; verts[v + 1] = baseY; verts[v + 2] = blz; v += 3
+        verts[v] = alx; verts[v + 1] = baseY; verts[v + 2] = alz; v += 3
+        verts[v] = arx; verts[v + 1] = baseY; verts[v + 2] = arz; v += 3
+        verts[v] = brx; verts[v + 1] = baseY; verts[v + 2] = brz; v += 3
 
         // Left wall
-        verts[v]=alx; verts[v+1]=baseY; verts[v+2]=alz; v+=3
-        verts[v]=blx; verts[v+1]=baseY; verts[v+2]=blz; v+=3
-        verts[v]=blx; verts[v+1]=topY;  verts[v+2]=blz; v+=3
-        verts[v]=alx; verts[v+1]=baseY; verts[v+2]=alz; v+=3
-        verts[v]=blx; verts[v+1]=topY;  verts[v+2]=blz; v+=3
-        verts[v]=alx; verts[v+1]=topY;  verts[v+2]=alz; v+=3
+        verts[v] = alx; verts[v + 1] = baseY; verts[v + 2] = alz; v += 3
+        verts[v] = blx; verts[v + 1] = baseY; verts[v + 2] = blz; v += 3
+        verts[v] = blx; verts[v + 1] = topY; verts[v + 2] = blz; v += 3
+        verts[v] = alx; verts[v + 1] = baseY; verts[v + 2] = alz; v += 3
+        verts[v] = blx; verts[v + 1] = topY; verts[v + 2] = blz; v += 3
+        verts[v] = alx; verts[v + 1] = topY; verts[v + 2] = alz; v += 3
 
         // Right wall
-        verts[v]=arx; verts[v+1]=baseY; verts[v+2]=arz; v+=3
-        verts[v]=brx; verts[v+1]=topY;  verts[v+2]=brz; v+=3
-        verts[v]=brx; verts[v+1]=baseY; verts[v+2]=brz; v+=3
-        verts[v]=arx; verts[v+1]=baseY; verts[v+2]=arz; v+=3
-        verts[v]=arx; verts[v+1]=topY;  verts[v+2]=arz; v+=3
-        verts[v]=brx; verts[v+1]=topY;  verts[v+2]=brz; v+=3
+        verts[v] = arx; verts[v + 1] = baseY; verts[v + 2] = arz; v += 3
+        verts[v] = brx; verts[v + 1] = topY; verts[v + 2] = brz; v += 3
+        verts[v] = brx; verts[v + 1] = baseY; verts[v + 2] = brz; v += 3
+        verts[v] = arx; verts[v + 1] = baseY; verts[v + 2] = arz; v += 3
+        verts[v] = arx; verts[v + 1] = topY; verts[v + 2] = arz; v += 3
+        verts[v] = brx; verts[v + 1] = topY; verts[v + 2] = brz; v += 3
       }
 
       trailGeo.setAttribute('position', new THREE.BufferAttribute(verts, 3))
@@ -227,9 +228,9 @@ export default function LightCycles() {
       <group ref={playerGrpCallback} position={[0, -3, 0]} rotation={[0, Math.PI, 0]}>
         <primitive object={playerScene} />
       </group>
-      <mesh ref={trailRef} geometry={trailGeo} material={trailMat} />
+      <mesh ref={trailRef} geometry={trailGeo} material={trailMat} frustumCulled={false} />
       <primitive object={redScene} position={[-3, -3, -8]} rotation={[0, 0, 0]} scale={1} />
-      <primitive object={orgScene} position={[3,  -3, -8]} rotation={[0, 0, 0]} scale={1} />
+      <primitive object={orgScene} position={[3, -3, -8]} rotation={[0, 0, 0]} scale={1} />
     </>
   )
 }
