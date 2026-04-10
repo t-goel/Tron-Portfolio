@@ -7,6 +7,7 @@ import CameraController from './3D/CameraController'
 import NameBackdrop from './3D/NameBackdrop'
 import CinematicIntro from './3D/CinematicIntro'
 import AmbientFX from './3D/AmbientFX'
+import Arena from './3D/Arena'
 import { useMobile } from '../hooks/useMobile'
 
 export default function Scene({ mainVisible }) {
@@ -27,6 +28,7 @@ export default function Scene({ mainVisible }) {
       {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
       {phase >= 3 && <LightCycles />}
+      {phase >= 3 && <Arena />}
 
       <EffectComposer>
         <Bloom
