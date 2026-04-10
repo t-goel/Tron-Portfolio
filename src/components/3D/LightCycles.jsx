@@ -72,23 +72,22 @@ export default function LightCycles() {
     if (p.rear)   p.rear.rotation.x   += rs
     if (p.engine) p.engine.rotation.x += rs
 
-    // Enemies face toward camera so wheel spin direction is flipped
     const r = red.current
-    if (r.front)  r.front.rotation.x  += fs
-    if (r.rear)   r.rear.rotation.x   -= rs
-    if (r.engine) r.engine.rotation.x -= rs
+    if (r.front)  r.front.rotation.x  -= fs
+    if (r.rear)   r.rear.rotation.x   += rs
+    if (r.engine) r.engine.rotation.x += rs
 
     const o = org.current
-    if (o.front)  o.front.rotation.x  += fs
-    if (o.rear)   o.rear.rotation.x   -= rs
-    if (o.engine) o.engine.rotation.x -= rs
+    if (o.front)  o.front.rotation.x  -= fs
+    if (o.rear)   o.rear.rotation.x   += rs
+    if (o.engine) o.engine.rotation.x += rs
   })
 
   return (
     <>
       <primitive object={playerScene} position={[0,  -3, 0]} rotation={[0, Math.PI, 0]} scale={1} />
-      <primitive object={redScene}    position={[-3, -3, 0]} rotation={[0, 0, 0]}       scale={1} />
-      <primitive object={orgScene}    position={[3,  -3, 0]} rotation={[0, 0, 0]}       scale={1} />
+      <primitive object={redScene}    position={[-3, -3, -8]} rotation={[0, 0, 0]} scale={1} />
+      <primitive object={orgScene}    position={[3,  -3, -8]} rotation={[0, 0, 0]} scale={1} />
     </>
   )
 }
