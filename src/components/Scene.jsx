@@ -3,7 +3,6 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import { OrbitControls } from '@react-three/drei'
 import useAppState from '../store/appState'
 import GridFloor from './3D/GridFloor'
-import GatewayPanes from './3D/GatewayPanes'
 import CameraController from './3D/CameraController'
 import NameBackdrop from './3D/NameBackdrop'
 import CinematicIntro from './3D/CinematicIntro'
@@ -12,7 +11,6 @@ import { useMobile } from '../hooks/useMobile'
 
 export default function Scene({ mainVisible }) {
   const phase = useAppState((s) => s.phase)
-  const activeSector = useAppState((s) => s.activeSector)
   const isMobile = useMobile()
 
   return (
@@ -28,9 +26,8 @@ export default function Scene({ mainVisible }) {
       {phase >= 3 && <CameraController />}
       {phase >= 3 && <AmbientFX />}
       {phase >= 2 && <GridFloor />}
-      {!isMobile && <GatewayPanes />}
 
-      {phase >= 3 && !activeSector && !isMobile && (
+      {phase >= 3 && !isMobile && (
         <OrbitControls
           enablePan={false}
           maxPolarAngle={Math.PI / 2.1}
